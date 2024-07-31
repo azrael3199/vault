@@ -79,8 +79,8 @@ const Login = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="w-screen h-screen bg-background p-4 flex justify-center items-center">
-      <Card className="w-[350px]">
+    <div className="h-full bg-background p-4 flex justify-center items-center">
+      <Card className="w-[350px] mb-12">
         <CardHeader>
           <CardTitle>Hi Azrael!</CardTitle>
           <CardDescription>Please enter your code to continue.</CardDescription>

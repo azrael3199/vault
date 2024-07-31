@@ -1,5 +1,6 @@
 import Layout from "./components/Layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import Gallery from "./pages/Gallery";
 import Login from "./pages/Login";
 import Main from "./pages/Main";
 import NotFound from "./pages/NotFound";
@@ -7,7 +8,11 @@ import NotFound from "./pages/NotFound";
 const routes = [
   {
     path: "/login",
-    element: <Login />,
+    element: (
+      <Layout>
+        <Login />
+      </Layout>
+    ),
   },
   {
     path: "/",
@@ -20,11 +25,11 @@ const routes = [
     ),
   },
   {
-    path: "/images",
+    path: "/gallery",
     element: (
       <ProtectedRoute>
         <Layout>
-          <></>
+          <Gallery />
         </Layout>
       </ProtectedRoute>
     ),

@@ -1,7 +1,6 @@
 import AuthProvider from "./components/providers/AuthProvider";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import routes from "./routes";
-import DarkModeToggle from "./components/DarkModeToggle/DarkModeToggle";
 import { ThemeProvider } from "./components/providers/ThemeProvider";
 import { AppStateProvider } from "./components/providers/AppStateProvider";
 function App() {
@@ -12,7 +11,6 @@ function App() {
       <AppStateProvider>
         <AuthProvider>
           <RouterProvider router={browserRouter} />
-          <DarkModeToggle />
         </AuthProvider>
       </AppStateProvider>
     </ThemeProvider>
