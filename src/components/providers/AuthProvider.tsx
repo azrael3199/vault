@@ -5,7 +5,7 @@ type AuthContextValue = {
   setIsAuthenticated: Dispatch<SetStateAction<boolean>>;
 };
 
-const AuthContext = createContext<AuthContextValue>({
+export const AuthContext = createContext<AuthContextValue>({
   isAuthenticated: false,
   setIsAuthenticated: () => {},
 });
