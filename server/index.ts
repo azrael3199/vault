@@ -3,6 +3,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import usersRouter from "./routes/users";
+import filesRouter from "./routes/files";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use(cors(corsOptions));
 
 // API Collection
 app.use("/api/users", usersRouter);
+app.use("/api/files", filesRouter);
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);

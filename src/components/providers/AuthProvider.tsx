@@ -1,17 +1,22 @@
-import { createContext, Dispatch, SetStateAction, useState } from "react";
+import useSessionStorage from "@/lib/hooks/useSessionStorage";
+import { createContext } from "react";
 
 type AuthContextValue = {
   isAuthenticated: boolean;
-  setIsAuthenticated: Dispatch<SetStateAction<boolean>>;
+  setIsAuthenticated: (newValue: boolean) => void;
 };
 
 export const AuthContext = createContext<AuthContextValue>({
   isAuthenticated: false,
-  setIsAuthenticated: () => {},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setIsAuthenticated: (_: boolean) => {},
 });
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useSessionStorage(
+    "isAuthenticated",
+    false
+  );
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>

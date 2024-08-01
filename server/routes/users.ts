@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import users from "../models/users";
+import User from "../models/user";
 
 const router = express.Router();
 
@@ -8,7 +8,7 @@ const router = express.Router();
 router.post("/login", async (req: Request, res: Response) => {
   const { username, password } = req.body;
   try {
-    const user = await users.findOne({ username });
+    const user = await User.findOne({ username });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -33,8 +33,7 @@ router.post("/register", (req: Request, res: Response) => {
   console.log(req);
 
   // Check if the username already exists
-  users
-    .findOne({ username })
+  User.findOne({ username })
     .then((user) => {
       if (user) {
         return res.status(409).json({ message: "Username already exists" });
@@ -42,7 +41,7 @@ router.post("/register", (req: Request, res: Response) => {
         // Salt Hash the req.body password
         const salt = bcrypt.genSaltSync(10);
         const hashedPassword = bcrypt.hashSync(password, salt);
-        const newUser = new users({
+        const newUser = new User({
           username,
           hashedPassword,
           salt,
