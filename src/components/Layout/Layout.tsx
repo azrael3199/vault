@@ -13,9 +13,11 @@ const Layout = ({ children }: Props) => {
   return (
     <div className="h-screen flex flex-col">
       <ActionsBar />
-      <div className="flex flex-1 overflow-y-auto">
+      <div className="flex flex-1 overflow-hidden">
         {isAuthenticated && window.location.pathname !== "/" && <Sidebar />}
-        <div className="grow py-3 m-3 mt-0 border rounded-md">{children}</div>
+        <div className="grow py-3 m-3 mr-2 mt-0 border rounded-md">
+          {children}
+        </div>
       </div>
     </div>
   );

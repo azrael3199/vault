@@ -4,10 +4,12 @@ import { useTheme } from "../providers/ThemeProvider";
 import { AuthContext } from "../providers/AuthProvider";
 import { useContext } from "react";
 import { Button } from "../ui/button";
+import { useNavigate } from "react-router-dom";
 
 const ActionsBar = () => {
   const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
   const onThemeChange = () => {
     if (theme === "light") {
@@ -37,7 +39,10 @@ const ActionsBar = () => {
           <Moon className="w-5 h-5"></Moon>
         </div>
         {window.location.pathname !== "/login" && (
-          <div className="flex justify-center items-center gap-1">
+          <div
+            className="flex justify-center items-center gap-1 hover:cursor-pointer"
+            onClick={() => navigate("/")}
+          >
             <Vault className="w-6 h-6 text-yellow-500" />
             <h1 className="text-2xl title">Vault.</h1>
           </div>

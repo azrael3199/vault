@@ -130,34 +130,32 @@ const Sidebar = () => {
         </TooltipProvider>
       </div>
       {galleryFiles.length > 0 && (
-        <div className="py-2 flex min-h-0 flex-col gap-1 text-md text-gray-600">
-          <div className="overflow-y-auto">
-            {galleryFiles.map((file) => (
-              <div
-                key={file.id}
-                onClick={() => {
-                  setSelectedFile(file);
-                }}
-              >
-                <SidebarItem
-                  selected={file.id === selectedFile?.id}
-                  icon={
-                    <Image
-                      className={clsx("w-5 h-5 text-gray-600 col-span-1", {
-                        "text-gray-900": file.id === selectedFile?.id,
-                      })}
-                    />
-                  }
-                  itemName={file.filename}
-                />
-              </div>
-            ))}
-            {itemsLoading ? (
-              <div className="flex items-center justify-center p-3">
-                <LoadingSpinner />
-              </div>
-            ) : null}
-          </div>
+        <div className="py-2 flex h-full scrollable-content flex-col gap-1 text-md text-gray-600">
+          {galleryFiles.map((file) => (
+            <div
+              key={file.id}
+              onClick={() => {
+                setSelectedFile(file);
+              }}
+            >
+              <SidebarItem
+                selected={file.id === selectedFile?.id}
+                icon={
+                  <Image
+                    className={clsx("w-5 h-5 text-gray-600 col-span-1", {
+                      "text-gray-900": file.id === selectedFile?.id,
+                    })}
+                  />
+                }
+                itemName={file.filename}
+              />
+            </div>
+          ))}
+          {itemsLoading ? (
+            <div className="flex items-center justify-center p-3">
+              <LoadingSpinner />
+            </div>
+          ) : null}
         </div>
       )}
       {galleryFiles.length === 0 && !itemsLoading ? (
