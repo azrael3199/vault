@@ -16,13 +16,16 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-    server: {
-      proxy: {
-        "/api": {
-          target: "http://localhost:3000",
-          secure: false,
-        },
-      },
-    },
+    server:
+      env.MODE === "development"
+        ? {
+            proxy: {
+              "/api": {
+                target: "http://localhost:5000",
+                secure: false,
+              },
+            },
+          }
+        : {},
   };
 });

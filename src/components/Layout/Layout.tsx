@@ -12,11 +12,11 @@ const Layout = ({ children }: Props) => {
   const { isAuthenticated } = useContext(AuthContext);
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen max-h-screen flex flex-col">
       <ActionsBar />
       <div className="flex flex-1 overflow-hidden">
         {isAuthenticated && window.location.pathname !== "/" && <Sidebar />}
-        <div className="grow py-3 m-3 mr-2 mt-0 border rounded-md">
+        <div className="md:grow w-full py-3 m-3 mr-2 mt-0 border rounded-md">
           {children}
         </div>
       </div>

@@ -80,12 +80,12 @@ const Login = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="h-full bg-background p-4 flex flex-col gap-8 justify-center items-center">
+    <div className="md:h-full bg-background p-4 flex flex-col gap-8 justify-center items-center">
       <div className="flex justify-center items-center gap-1">
         <Vault className="w-10 h-10 text-yellow-500" />
         <h1 className="text-4xl title">Vault.</h1>
       </div>
-      <Card className="w-[350px] mb-12">
+      <Card className="w-full md:w-[350px] mb-12">
         <CardHeader>
           <CardTitle>Hi Azrael!</CardTitle>
           <CardDescription>Please enter your code to continue.</CardDescription>

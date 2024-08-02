@@ -8,7 +8,7 @@ import filesRouter from "./routes/files";
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 const connectionString = process.env.DB_CONNECTION_STRING || "";
 mongoose.connect(connectionString);
@@ -26,7 +26,7 @@ app.use(express.json());
 
 // enabling CORS for some specific origins only.
 const corsOptions = {
-  origin: ["http://localhost:5713"],
+  origin: ["http://localhost:3000", "http://192.168.0.110:3000"],
 };
 app.use(cors(corsOptions));
 
