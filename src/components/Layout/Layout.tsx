@@ -2,6 +2,7 @@ import { useContext } from "react";
 import ActionsBar from "../ActionsBar/ActionsBar";
 import { AuthContext } from "../providers/AuthProvider";
 import Sidebar from "../Sidebar/Sidebar";
+import MobileNavbar from "../MobileNavbar/MobileNavbar";
 
 type Props = {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ const Layout = ({ children }: Props) => {
           {children}
         </div>
       </div>
+      {isAuthenticated && window.location.pathname !== "/" && <MobileNavbar />}
     </div>
   );
 };

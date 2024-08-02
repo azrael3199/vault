@@ -6,7 +6,8 @@ import { downloadFile } from "@/lib/apis/file";
 import { useContext, useEffect, useState } from "react";
 
 const Gallery = () => {
-  const { selectedFile } = useContext(AppStateContext);
+  const { selectedFile, setSelectedFile, galleryFiles } =
+    useContext(AppStateContext);
   const { toast } = useToast();
 
   const [dataURL, setDataURL] = useState("");
@@ -31,6 +32,28 @@ const Gallery = () => {
         });
         console.log(error);
       }
+    }
+  };
+
+  const onPrev = () => {
+    const currentIndex = galleryFiles.findIndex(
+      (file) => file.id === selectedFile?.id
+    );
+    if (currentIndex > 0) {
+      setSelectedFile(galleryFiles[currentIndex - 1]);
+    } else {
+      setSelectedFile(galleryFiles[galleryFiles.length - 1]);
+    }
+  };
+
+  const onNext = () => {
+    const currentIndex = galleryFiles.findIndex(
+      (file) => file.id === selectedFile?.id
+    );
+    if (currentIndex < galleryFiles.length - 1) {
+      setSelectedFile(galleryFiles[currentIndex + 1]);
+    } else {
+      setSelectedFile(galleryFiles[0]);
     }
   };
 
@@ -65,7 +88,13 @@ const Gallery = () => {
 
   return (
     <div className="h-full w-full relative overflow-hidden">
-      {selectedFile && <Overlay filename={selectedFile?.filename} />}
+      {selectedFile && (
+        <Overlay
+          filename={selectedFile?.filename}
+          onPrev={onPrev}
+          onNext={onNext}
+        />
+      )}
       {dataURL && (
         <img
           src={dataURL}
