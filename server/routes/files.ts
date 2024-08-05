@@ -147,4 +147,46 @@ router.delete("/delete/:id", async (req: Request, res: Response) => {
   }
 });
 
+// Update a file
+router.put("/update/:id", async (req: Request, res: Response) => {
+  try {
+    const file = await File.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!file) {
+      return res.status(404).send("File not found.");
+    }
+    res.status(200).send("File updated successfully.");
+  } catch (error) {
+    res.status(500).send("Error updating file.");
+  }
+});
+
+router.get("/stats", async (req: Request, res: Response) => {
+  try {
+    const stats = await File.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalFiles: { $sum: 1 },
+          totalSize: { $sum: "$size" },
+        },
+      },
+    ]);
+    res.status(200).send(stats[0]);
+  } catch (error) {
+    res.status(500).send("Error getting file stats.");
+  }
+});
+
+// Get all files
+router.get("/all", async (req: Request, res: Response) => {
+  try {
+    const files = await File.find();
+    res.status(200).send(files);
+  } catch (error) {
+    res.status(500).send("Error getting files.");
+  }
+});
+
 export default router;

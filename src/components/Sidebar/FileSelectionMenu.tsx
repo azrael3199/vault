@@ -75,6 +75,10 @@ const FileSelectionMenu = () => {
     if (files) {
       setItemsLoading(true);
       try {
+        const loader = document.getElementById("loader");
+        if (loader) {
+          loader.scrollTop = 0;
+        }
         const uploadRes = await uploadFiles(files);
         if (!uploadRes || !uploadRes.data) {
           toast({
@@ -85,10 +89,6 @@ const FileSelectionMenu = () => {
           return;
         }
         fetchFiles();
-        const sidebarElement = document.getElementById("sidebar");
-        if (sidebarElement) {
-          sidebarElement.scrollTop = 0;
-        }
       } catch (error) {
         toast({
           variant: "destructive",
@@ -177,11 +177,13 @@ const FileSelectionMenu = () => {
                   />
                 }
                 itemName={file.filename}
+                itemDate={file.uploadedAt}
+                itemSize={file.size}
               />
             </div>
           ))}
           {itemsLoading ? (
-            <div className="flex items-center justify-center p-3">
+            <div id="loader" className="flex items-center justify-center p-3">
               <LoadingSpinner />
             </div>
           ) : null}
