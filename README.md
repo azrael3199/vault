@@ -1,30 +1,17 @@
-# React + TypeScript + Vite
+# Vault
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is an app to store your images safely. Vault encrypts the images you upload and serves them through a server, which means you do not have to download a jpg in your local system.
 
-Currently, two official plugins are available:
+# Steps to run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json', './tsconfig.app.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+1. Download Node
+2. Use npm to install pnpm globally `npm i -g pnpm`
+3. Use npm to install serve globally `npm i -g serve`
+4. Download and install MongoDB Compass
+5. Create a database and get the connection string
+6. In the server folder, create a .env file as a copy of the existing .env.example file
+7. Paste the DB connection string in the appropriate env variable
+8. Assign a static IP to your PC in your LAN
+9. Create a .env.production file in the root folder and put the server's URL with Port number in the env vars
+10. With your server online, make a manual api call to `/api/users/register` with username and passcode in the body, this will create your user
+11. Now run the `run.bat` script and enjoy!
