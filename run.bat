@@ -3,4 +3,4 @@
 call install-deps.bat
 
 REM Build the React app
-call pnpm start
+call pnpm serve

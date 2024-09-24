@@ -26,7 +26,7 @@ app.use(express.json());
 
 // enabling CORS for some specific origins only.
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://192.168.0.110:3000"],
+  origin: ["http://localhost:3000", "http://192.168.0.118:3000"],
 };
 app.use(cors(corsOptions));
 

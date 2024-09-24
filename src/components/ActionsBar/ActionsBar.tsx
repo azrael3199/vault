@@ -1,3 +1,5 @@
+"use client";
+
 import { LogOut, Moon, Sun, Vault } from "lucide-react";
 import { Switch } from "../ui/switch";
 import { useTheme } from "../providers/ThemeProvider";
