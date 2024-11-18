@@ -3,7 +3,7 @@ import { AppStateContext, File } from "../providers/AppStateProvider";
 import LoadingSpinner from "../GlobalLoader/LoadingSpinner";
 import { getAllFilesOfType, uploadFiles } from "@/lib/apis/file";
 import { useToast } from "../ui/use-toast";
-import { Image, Plus } from "lucide-react";
+import { ArrowUp, Image, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Tooltip,
@@ -13,11 +13,16 @@ import {
 } from "../ui/tooltip";
 import SidebarItem from "./SidebarItem";
 import clsx from "clsx";
+import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 
 const FileSelectionMenu = () => {
   const { galleryFiles, selectedFile, setGalleryFiles, setSelectedFile } =
     useContext(AppStateContext);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<"filename" | "uploadedAt" | "size">(
+    "uploadedAt"
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,10 +46,19 @@ const FileSelectionMenu = () => {
             };
           })
           .sort((a: File, b: File) => {
-            return (
-              new Date(b.uploadedAt).getTime() -
-              new Date(a.uploadedAt).getTime()
-            );
+            const multiplier = sortOrder === "asc" ? 1 : -1;
+            switch (sortBy) {
+              case "filename":
+                return a.filename.localeCompare(b.filename) * multiplier;
+              case "uploadedAt":
+                return (
+                  (new Date(b.uploadedAt).getTime() -
+                    new Date(a.uploadedAt).getTime()) *
+                  multiplier
+                );
+              case "size":
+                return (a.size - b.size) * multiplier;
+            }
           });
         setGalleryFiles(newFiles);
       } else {
@@ -121,10 +135,84 @@ const FileSelectionMenu = () => {
     }
   }, [selectedFile]);
 
+  useEffect(() => {
+    const oldFiles = [...galleryFiles];
+    const newFiles = oldFiles.sort((a: File, b: File) => {
+      const multiplier = sortOrder === "asc" ? 1 : -1;
+      switch (sortBy) {
+        case "filename":
+          return a.filename.localeCompare(b.filename) * multiplier;
+        case "uploadedAt":
+          return (
+            (new Date(b.uploadedAt).getTime() -
+              new Date(a.uploadedAt).getTime()) *
+            multiplier
+          );
+        case "size":
+          return (a.size - b.size) * multiplier;
+      }
+    });
+
+    setGalleryFiles(newFiles);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy, sortOrder]);
+
   return (
     <>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl">Files</h1>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="h-fit p-2 flex items-center gap-1"
+            >
+              Sort by {sortBy}
+              <ArrowUp
+                className={clsx("w-4 h-4", {
+                  "rotate-180": sortOrder === "desc",
+                })}
+              />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="p-2">
+            <ul className="space-y-2">
+              <li
+                className={clsx("hover:bg-gray-900 p-2", {
+                  "bg-gray-700": sortBy === "filename",
+                })}
+                onClick={() => {
+                  setSortBy("filename");
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                }}
+              >
+                Filename
+              </li>
+              <li
+                className={clsx("hover:bg-gray-900 p-2", {
+                  "bg-gray-700": sortBy === "uploadedAt",
+                })}
+                onClick={() => {
+                  setSortBy("uploadedAt");
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                }}
+              >
+                Uploaded At
+              </li>
+              <li
+                className={clsx("hover:bg-gray-900 p-2", {
+                  "bg-gray-700": sortBy === "size",
+                })}
+                onClick={() => {
+                  setSortBy("size");
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                }}
+              >
+                Size
+              </li>
+            </ul>
+          </PopoverContent>
+        </Popover>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

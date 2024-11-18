@@ -57,6 +57,20 @@ const Gallery = () => {
     }
   };
 
+  const onDownload = async () => {
+    if (!dataURL) {
+      await fetchContent();
+    }
+    const link = document.createElement("a");
+    link.href = dataURL;
+    link.download =
+      selectedFile?.filename ||
+      `image-${new Date().getTime()}.${selectedFile?.type || ""}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     if (selectedFile?.id && selectedFile?.type) {
       if (selectedFile.content) {
@@ -93,6 +107,7 @@ const Gallery = () => {
           filename={selectedFile?.filename}
           onPrev={onPrev}
           onNext={onNext}
+          onDownload={onDownload}
         />
       )}
       {dataURL && (

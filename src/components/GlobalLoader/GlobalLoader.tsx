@@ -9,7 +9,7 @@ const GlobalLoader = ({ message }: Props) => {
   if (!message) return <></>;
 
   return (
-    <Dialog defaultOpen={!!message}>
+    <Dialog open={true}>
       <DialogContent
         className="flex flex-col items-center justify-center gap-3 w-fit p-4"
         slotProps={{ close: { className: "hidden" } }}
