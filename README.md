@@ -14,4 +14,5 @@ This is an app to store your images safely. Vault encrypts the images you upload
 8. Assign a static IP to your PC in your LAN
 9. Create a .env.production file in the root folder and put the server's URL with Port number in the env vars
 10. With your server online, make a manual api call to `/api/users/register` with username and passcode in the body, this will create your user
-11. Now run the `run.bat` script and enjoy!
+11. Change the env MODE variable to production
+12. Now run the `run.bat` script and enjoy!
