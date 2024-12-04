@@ -29,6 +29,10 @@ const File = new mongoose.Schema({
     required: true,
     type: String,
   },
+  isFavorite: {
+    required: true,
+    type: Boolean,
+  },
 });
 
 export default mongoose.model("File", File);

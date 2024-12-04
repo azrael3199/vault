@@ -9,6 +9,7 @@ export type File = {
   content: string | null;
   type: string;
   size: number;
+  isFavorite: boolean;
 };
 
 interface AppState {

@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { Tooltip, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { TooltipContent } from "@radix-ui/react-tooltip";
 import { getFormattedDate } from "@/lib/utils/misc";
+import { Star } from "lucide-react";
 
 type Props = {
   selected?: boolean;
@@ -9,6 +10,8 @@ type Props = {
   itemName: string;
   itemDate: string;
   itemSize: number;
+  isFavorite?: boolean;
+  isFavoriteHandler?: () => void;
 };
 
 const SidebarItem = ({
@@ -17,6 +20,8 @@ const SidebarItem = ({
   itemName,
   itemDate,
   itemSize,
+  isFavorite,
+  isFavoriteHandler,
 }: Props) => {
   const formattedDate = getFormattedDate(itemDate);
   const sizeInMb = (itemSize / (1024 * 1024)).toFixed(2);
@@ -26,7 +31,7 @@ const SidebarItem = ({
         <TooltipTrigger asChild>
           <div
             className={clsx(
-              "grid grid-cols-7 grid-rows-1 rounded-md px-1 items-center hover:cursor-pointer ml-2 mr-4",
+              "grid grid-cols-8 grid-rows-1 rounded-md px-1 items-center hover:cursor-pointer ml-2 mr-4",
               {
                 "bg-gray-500": selected,
                 "hover:bg-gray-800": !selected,
@@ -44,6 +49,13 @@ const SidebarItem = ({
             >
               {itemName}
             </p>
+            <Star
+              className={clsx("w-5 h-5 col-span-1", {
+                "text-yellow-400": isFavorite,
+                "text-gray-400": !isFavorite,
+              })}
+              onClick={isFavoriteHandler}
+            />
           </div>
         </TooltipTrigger>
         <TooltipContent className="bg-background border rounded-md p-2 mb-2">

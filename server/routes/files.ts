@@ -34,7 +34,7 @@ router.get("/get/:type", (req: Request, res: Response) => {
 
   File.find(
     { type: { $in: mimeTypes } },
-    { _id: 1, filename: 1, uploadedAt: 1, size: 1, type: 1 }
+    { _id: 1, filename: 1, uploadedAt: 1, size: 1, type: 1, isFavorite: 1 }
   )
     .lean()
     .then((files) => {
@@ -121,6 +121,7 @@ router.post(
           key: key.toString("hex"),
           iv: iv.toString("hex"),
           uploadedAt: Date.now(),
+          isFavorite: false,
         });
 
         return newFile.save();
@@ -150,13 +151,38 @@ router.delete("/delete/:id", async (req: Request, res: Response) => {
 // Update a file
 router.put("/update/:id", async (req: Request, res: Response) => {
   try {
-    const file = await File.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const { isFavorite, ...rest } = req.body;
+    if (
+      Object.keys(rest).length > 0 &&
+      !Object.keys(rest).every((key) =>
+        [
+          "size",
+          "filename",
+          "type",
+          "uploadedAt",
+          "content",
+          "key",
+          "iv",
+        ].includes(key)
+      )
+    ) {
+      return res.status(400).send("Invalid property to be updated.");
+    }
+    if (isFavorite !== undefined && typeof isFavorite !== "boolean") {
+      return res.status(400).send("isFavorite must be a boolean.");
+    }
+    const file = await File.findByIdAndUpdate(
+      req.params.id,
+      { ...rest, isFavorite },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
     if (!file) {
       return res.status(404).send("File not found.");
     }
-    res.status(200).send("File updated successfully.");
+    res.status(200).send(file);
   } catch (error) {
     res.status(500).send("Error updating file.");
   }

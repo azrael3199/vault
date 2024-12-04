@@ -25,6 +25,28 @@ export const uploadFiles = (files: FileList) => {
   });
 };
 
+export const favoriteFile = async (id: string) => {
+  return apiClient
+    .put(`/files/update/${id}`, {
+      isFavorite: true,
+    })
+    .catch((error) => {
+      console.error(error);
+      throw error;
+    });
+};
+
+export const unfavoriteFile = async (id: string) => {
+  return apiClient
+    .put(`/files/update/${id}`, {
+      isFavorite: false,
+    })
+    .catch((error) => {
+      console.error(error);
+      throw error;
+    });
+};
+
 export const deleteFile = (id: string) => {
   return apiClient.delete(`/files/delete/${id}`);
 };
