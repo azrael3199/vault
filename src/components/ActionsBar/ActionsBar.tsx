@@ -21,6 +21,8 @@ const ActionsBar = () => {
     }
   };
 
+  console.log("pathname", window.location.hash);
+
   return (
     <div className="flex justify-between items-start p-2 gap-3">
       <div className="p-2 flex items-center justify-center gap-2">
@@ -39,7 +41,8 @@ const ActionsBar = () => {
         />
         <Moon className="w-5 h-5"></Moon>
       </div>
-      {window.location.pathname !== "/login" && (
+      {window.location.hash !== "#/login" &&
+      window.location.hash !== "#/register" ? (
         <div
           className="flex justify-center md:mr-20 items-center gap-1 hover:cursor-pointer"
           onClick={() => navigate("/")}
@@ -47,7 +50,7 @@ const ActionsBar = () => {
           <Vault className="w-6 h-6 text-yellow-500" />
           <h1 className="text-2xl title">Vault.</h1>
         </div>
-      )}
+      ) : null}
       {isAuthenticated && (
         <div className="flex items-center justify-center gap-2">
           <Button

@@ -11,6 +11,7 @@ const app: Express = express();
 const port = process.env.PORT || 5000;
 
 const connectionString = process.env.DB_CONNECTION_STRING || "";
+console.log("[connectionString]", connectionString);
 mongoose.connect(connectionString);
 const database = mongoose.connection;
 
@@ -26,7 +27,12 @@ app.use(express.json());
 
 // enabling CORS for some specific origins only.
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://192.168.0.118:3000"],
+  origin: [
+    "http://localhost:3000",
+    "http://192.168.31.216:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+  ],
 };
 app.use(cors(corsOptions));
 

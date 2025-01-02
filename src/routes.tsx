@@ -4,6 +4,7 @@ import Gallery from "./pages/Gallery";
 import Login from "./pages/Login";
 import Main from "./pages/Main";
 import NotFound from "./pages/NotFound";
+import Register from "./pages/Register";
 
 const routes = [
   {
@@ -11,6 +12,14 @@ const routes = [
     element: (
       <Layout>
         <Login />
+      </Layout>
+    ),
+  },
+  {
+    path: "/register",
+    element: (
+      <Layout>
+        <Register />
       </Layout>
     ),
   },

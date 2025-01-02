@@ -187,7 +187,7 @@ const FileSelectionMenu = () => {
   }, [sortBy, sortOrder]);
 
   return (
-    <div className="flex flex-col gap-1 overflow-y-auto scrollable-content">
+    <div className="flex flex-col gap-1 overflow-y-scroll scrollable-content">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl">Files</h1>
         <Popover>

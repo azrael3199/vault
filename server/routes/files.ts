@@ -13,9 +13,10 @@ const router = express.Router();
 const algorithm = "aes-256-cbc";
 
 // Get files by type, but not content
-router.get("/get/:type", (req: Request, res: Response) => {
+router.get("/get/:type/:userId", (req: Request, res: Response) => {
   const params = req.params;
   const type = params.type;
+  const userId = params.userId;
   let mimeTypes;
   if (
     type !== "image" &&
@@ -33,7 +34,7 @@ router.get("/get/:type", (req: Request, res: Response) => {
   // TODO: Add support for other types
 
   File.find(
-    { type: { $in: mimeTypes } },
+    { type: { $in: mimeTypes }, userId },
     { _id: 1, filename: 1, uploadedAt: 1, size: 1, type: 1, isFavorite: 1 }
   )
     .lean()
@@ -54,42 +55,49 @@ router.get("/get/:type", (req: Request, res: Response) => {
     });
 });
 
-router.get("/download/:type/:id", async (req: Request, res: Response) => {
-  try {
-    const file = await File.findById(req.params.id);
-    let encoding: BufferEncoding = "utf-8";
+router.get(
+  "/download/:type/:id/:userId",
+  async (req: Request, res: Response) => {
+    try {
+      const file = await File.findOne({
+        _id: req.params.id,
+        userId: req.params.userId,
+      });
 
-    if (req.params.type === "image") {
-      encoding = "base64";
+      let encoding: BufferEncoding = "utf-8";
+
+      if (req.params.type === "image") {
+        encoding = "base64";
+      }
+
+      if (!file) {
+        return res.status(404).send("File not found or not authorized.");
+      }
+
+      const key = Buffer.from(file.key, "hex");
+      const iv = Buffer.from(file.iv, "hex");
+
+      // Decrypt the file content
+      const decipher = crypto.createDecipheriv(algorithm, key, iv);
+      let decrypted = decipher.update(file.content);
+      decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+      res.status(200).send({
+        uploadedAt: file.uploadedAt,
+        filename: file.filename,
+        type: file.type,
+        size: file.size,
+        content: decrypted.toString(encoding), // or any other encoding you prefer
+      });
+    } catch (error) {
+      res.status(500).send("Error retrieving file.");
     }
-
-    if (!file) {
-      return res.status(404).send("File not found.");
-    }
-
-    const key = Buffer.from(file.key, "hex");
-    const iv = Buffer.from(file.iv, "hex");
-
-    // Decrypt the file content
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-    let decrypted = decipher.update(file.content);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-
-    res.status(200).send({
-      uploadedAt: file.uploadedAt,
-      filename: file.filename,
-      type: file.type,
-      size: file.size,
-      content: decrypted.toString(encoding), // or any other encoding you prefer
-    });
-  } catch (error) {
-    res.status(500).send("Error retrieving file.");
   }
-});
+);
 
 // Encrypt and save the file
 router.post(
-  "/upload",
+  "/upload/:userId",
   upload.array("files"),
   async (req: Request, res: Response) => {
     try {
@@ -114,6 +122,7 @@ router.post(
 
         // Create a new file document
         const newFile = new File({
+          userId: req.params.userId,
           filename: originalname,
           type: mimetype,
           size: size,
@@ -136,12 +145,18 @@ router.post(
 );
 
 // Delete a file
-router.delete("/delete/:id", async (req: Request, res: Response) => {
+router.delete("/delete/:id/:userId", async (req: Request, res: Response) => {
   try {
-    const file = await File.findByIdAndDelete(req.params.id);
+    const file = await File.findOne({
+      _id: req.params.id,
+      userId: req.params.userId,
+    });
     if (!file) {
-      return res.status(404).send("File not found.");
+      return res
+        .status(404)
+        .send("File not found or not authorized to delete.");
     }
+    await File.findByIdAndDelete(req.params.id);
     res.status(200).send("File deleted successfully.");
   } catch (error) {
     res.status(500).send("Error deleting file.");
@@ -149,7 +164,7 @@ router.delete("/delete/:id", async (req: Request, res: Response) => {
 });
 
 // Update a file
-router.put("/update/:id", async (req: Request, res: Response) => {
+router.put("/update/:id/:userId", async (req: Request, res: Response) => {
   try {
     const { isFavorite, ...rest } = req.body;
     if (
@@ -171,7 +186,16 @@ router.put("/update/:id", async (req: Request, res: Response) => {
     if (isFavorite !== undefined && typeof isFavorite !== "boolean") {
       return res.status(400).send("isFavorite must be a boolean.");
     }
-    const file = await File.findByIdAndUpdate(
+    const file = await File.findOne({
+      _id: req.params.id,
+      userId: req.params.userId,
+    });
+    if (!file) {
+      return res
+        .status(404)
+        .send("File not found or not authorized to update.");
+    }
+    const updatedFile = await File.findByIdAndUpdate(
       req.params.id,
       { ...rest, isFavorite },
       {
@@ -179,18 +203,21 @@ router.put("/update/:id", async (req: Request, res: Response) => {
         runValidators: true,
       }
     );
-    if (!file) {
+    if (!updatedFile) {
       return res.status(404).send("File not found.");
     }
-    res.status(200).send(file);
+    res.status(200).send(updatedFile);
   } catch (error) {
     res.status(500).send("Error updating file.");
   }
 });
 
-router.get("/stats", async (req: Request, res: Response) => {
+router.get("/stats/:userId", async (req: Request, res: Response) => {
   try {
     const stats = await File.aggregate([
+      {
+        $match: { userId: req.params.userId },
+      },
       {
         $group: {
           _id: null,
@@ -199,6 +226,11 @@ router.get("/stats", async (req: Request, res: Response) => {
         },
       },
     ]);
+    if (stats.length === 0) {
+      return res
+        .status(404)
+        .send("File not found or not authorized to get file stats.");
+    }
     res.status(200).send(stats[0]);
   } catch (error) {
     res.status(500).send("Error getting file stats.");
@@ -206,9 +238,9 @@ router.get("/stats", async (req: Request, res: Response) => {
 });
 
 // Get all files
-router.get("/all", async (req: Request, res: Response) => {
+router.get("/all/:userId", async (req: Request, res: Response) => {
   try {
-    const files = await File.find();
+    const files = await File.find({ userId: req.params.userId });
     res.status(200).send(files);
   } catch (error) {
     res.status(500).send("Error getting files.");

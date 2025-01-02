@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+resources/mongodb/data/**/*
+resources/mongodb/logs/**/*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -28,4 +31,8 @@ dist-ssr
 **/.env.*
 !.env.example
 !**/.env.example
+
+release
+release/**/*
+server/server.exe
 

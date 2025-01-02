@@ -15,12 +15,12 @@ const Layout = ({ children }: Props) => {
     <div className="h-screen max-h-screen flex flex-col">
       <ActionsBar />
       <div className="flex flex-1 overflow-hidden">
-        {isAuthenticated && window.location.pathname !== "/" && <Sidebar />}
+        {isAuthenticated && window.location.hash !== "#/" && <Sidebar />}
         <div className="md:grow w-full py-3 m-3 mr-2 mt-0 border rounded-md">
           {children}
         </div>
       </div>
-      {isAuthenticated && window.location.pathname !== "/" && <MobileNavbar />}
+      {isAuthenticated && window.location.hash !== "#/" && <MobileNavbar />}
     </div>
   );
 };

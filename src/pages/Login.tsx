@@ -19,17 +19,15 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 type Inputs = {
+  username: string;
   passcode: string;
 };
 
-const username = "Azrael";
-
-const Login = () => {
+const Register = () => {
   const navigate = useNavigate();
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<Inputs>();
 
@@ -38,26 +36,27 @@ const Login = () => {
 
   const { toast } = useToast();
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const newValue = value.replace(/[^0-9]/g, "").slice(0, 30);
-    setValue("passcode", newValue, { shouldValidate: true });
-  };
+  //   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //     const value = e.target.value;
+  //     const newValue = value.replace(/[^0-9]/g, "").slice(0, 30);
+  //     setValue("passcode", newValue, { shouldValidate: true });
+  //   };
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    const { passcode } = data;
-    if (passcode && passcode.length > 0) {
-      setLoading("Signing in");
+    const { username, passcode } = data;
+    if (username && username.length > 0 && passcode && passcode.length > 0) {
+      setLoading("Logging In");
       try {
         const res = await userLogin(username, passcode);
         if (res && res.data?.authenticated === true) {
+          sessionStorage.setItem("userId", res.data.username);
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
           toast({
             variant: "destructive",
             title: "Error",
-            description: "Invalid passcode",
+            description: "Invalid username or passcode",
           });
         }
       } catch (error) {
@@ -87,11 +86,36 @@ const Login = () => {
       </div>
       <Card className="w-full md:w-[350px] mb-12">
         <CardHeader>
-          <CardTitle>Hi Azrael!</CardTitle>
-          <CardDescription>Please enter your code to continue.</CardDescription>
+          <CardTitle>Welcome back!</CardTitle>
+          <CardDescription>
+            Please enter your credentials to continue.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="p-2">
+            <div className="flex flex-col space-y-1.5 mb-1">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="Enter your username"
+                {...register("username", {
+                  required: "Username is required",
+                  pattern: {
+                    value: /^[a-zA-Z0-9_-]*$/,
+                    message: "Username cannot contain spaces",
+                  },
+                  validate: (value) =>
+                    value.trim().length > 0 ||
+                    "Username cannot contain spaces & cannot be empty",
+                })}
+                // onInput={handleInput}
+              />
+              {errors.passcode && (
+                <span className="text-red-500 text-xs">
+                  {errors.passcode.message}
+                </span>
+              )}
+            </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="passcode">Code</Label>
               <Input
@@ -107,7 +131,7 @@ const Login = () => {
                   validate: (value) =>
                     value.trim().length > 0 || "Passcode cannot contain spaces",
                 })}
-                onInput={handleInput}
+                // onInput={handleInput}
               />
               {errors.passcode && (
                 <span className="text-red-500 text-xs">
@@ -121,10 +145,19 @@ const Login = () => {
           <Button className="bg-primary" onClick={handleSubmit(onSubmit)}>
             Login
           </Button>
+          <Button
+            variant="link"
+            className="text-sm text-muted-foreground"
+            onClick={() => {
+              navigate("/register");
+            }}
+          >
+            New? Register here
+          </Button>
         </CardFooter>
       </Card>
     </div>
   );
 };
 
-export default Login;
+export default Register;

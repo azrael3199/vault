@@ -18,8 +18,8 @@ const Main = () => {
           onClick={() => navigate("/gallery")}
         >
           <CardHeader>
-            <CardTitle>Images / Videos</CardTitle>
-            <CardDescription>Find / Upload images and videos</CardDescription>
+            <CardTitle>Images</CardTitle>
+            <CardDescription>Find / Upload images</CardDescription>
           </CardHeader>
         </Card>
       </div>

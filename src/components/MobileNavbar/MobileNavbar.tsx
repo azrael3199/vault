@@ -35,7 +35,7 @@ const MobileNavbar = () => {
         </div>
         <DrawerContent>
           <div
-            className="h-[540px] p-3"
+            className="h-[540px] p-3 overflow-y-scroll"
             onClick={(event) => {
               if (isOpen) {
                 const drawerContainer = document.getElementById("sidebar");

@@ -3,22 +3,25 @@ import { apiClient } from "../utils/api";
 export const getAllFilesOfType = (
   type: "image" | "video" | "recording" | "text"
 ) => {
-  return apiClient.get(`/files/get/${type}`);
+  const userId = sessionStorage.getItem("userId");
+  return apiClient.get(`/files/get/${type}/${userId}`);
 };
 
 export const downloadFile = (
   id: string,
   type: "image" | "video" | "text" | "recording"
 ) => {
-  return apiClient.get(`/files/download/${type}/${id}`);
+  const userId = sessionStorage.getItem("userId");
+  return apiClient.get(`/files/download/${type}/${id}/${userId}`);
 };
 
 export const uploadFiles = (files: FileList) => {
   const formData = new FormData();
+  const userId = sessionStorage.getItem("userId");
   for (let i = 0; i < files.length; i++) {
     formData.append("files", files[i]);
   }
-  return apiClient.post(`/files/upload`, formData, {
+  return apiClient.post(`/files/upload/${userId}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -26,8 +29,9 @@ export const uploadFiles = (files: FileList) => {
 };
 
 export const favoriteFile = async (id: string) => {
+  const userId = sessionStorage.getItem("userId");
   return apiClient
-    .put(`/files/update/${id}`, {
+    .put(`/files/update/${id}/${userId}`, {
       isFavorite: true,
     })
     .catch((error) => {
@@ -37,8 +41,9 @@ export const favoriteFile = async (id: string) => {
 };
 
 export const unfavoriteFile = async (id: string) => {
+  const userId = sessionStorage.getItem("userId");
   return apiClient
-    .put(`/files/update/${id}`, {
+    .put(`/files/update/${id}/${userId}`, {
       isFavorite: false,
     })
     .catch((error) => {
@@ -48,5 +53,6 @@ export const unfavoriteFile = async (id: string) => {
 };
 
 export const deleteFile = (id: string) => {
-  return apiClient.delete(`/files/delete/${id}`);
+  const userId = sessionStorage.getItem("userId");
+  return apiClient.delete(`/files/delete/${id}/${userId}`);
 };

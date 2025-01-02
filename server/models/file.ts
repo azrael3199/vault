@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const File = new mongoose.Schema({
+  userId: {
+    required: true,
+    type: String,
+  },
   filename: {
     required: true,
     type: String,
