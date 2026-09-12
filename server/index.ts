@@ -2,6 +2,13 @@ import express, { Express } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+
+// Initialize environment variables (only needed for db connection string now)
+dotenv.config();
+
+import { initializeKeyManager } from "./lib/keyManager";
+initializeKeyManager();
+
 import usersRouter from "./routes/users";
 import filesRouter from "./routes/files";
 
@@ -25,16 +32,7 @@ database.once("connected", () => {
 
 app.use(express.json());
 
-// enabling CORS for some specific origins only.
-const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "http://192.168.31.216:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-  ],
-};
-app.use(cors(corsOptions));
+app.use(cors());
 
 // API Collection
 app.use("/api/users", usersRouter);

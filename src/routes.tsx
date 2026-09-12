@@ -1,17 +1,28 @@
+import { lazy, Suspense } from "react";
 import Layout from "./components/Layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
-import Gallery from "./pages/Gallery";
-import Login from "./pages/Login";
-import Main from "./pages/Main";
-import NotFound from "./pages/NotFound";
-import Register from "./pages/Register";
+import LoadingSpinner from "./components/GlobalLoader/LoadingSpinner";
+
+const Gallery = lazy(() => import("./pages/Gallery"));
+const Login = lazy(() => import("./pages/Login"));
+const Main = lazy(() => import("./pages/Main"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Register = lazy(() => import("./pages/Register"));
+
+const SuspenseLayout = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<div className="h-full w-full flex items-center justify-center"><LoadingSpinner className="w-8 h-8"/></div>}>
+    {children}
+  </Suspense>
+);
 
 const routes = [
   {
     path: "/login",
     element: (
       <Layout>
-        <Login />
+        <SuspenseLayout>
+          <Login />
+        </SuspenseLayout>
       </Layout>
     ),
   },
@@ -19,7 +30,9 @@ const routes = [
     path: "/register",
     element: (
       <Layout>
-        <Register />
+        <SuspenseLayout>
+          <Register />
+        </SuspenseLayout>
       </Layout>
     ),
   },
@@ -28,7 +41,9 @@ const routes = [
     element: (
       <ProtectedRoute>
         <Layout>
-          <Main />
+          <SuspenseLayout>
+            <Main />
+          </SuspenseLayout>
         </Layout>
       </ProtectedRoute>
     ),
@@ -38,14 +53,20 @@ const routes = [
     element: (
       <ProtectedRoute>
         <Layout>
-          <Gallery />
+          <SuspenseLayout>
+            <Gallery />
+          </SuspenseLayout>
         </Layout>
       </ProtectedRoute>
     ),
   },
   {
     path: "*",
-    element: <NotFound />,
+    element: (
+      <SuspenseLayout>
+        <NotFound />
+      </SuspenseLayout>
+    ),
   },
 ];
 

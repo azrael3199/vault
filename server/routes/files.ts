@@ -1,7 +1,9 @@
 import express, { Request, Response } from "express";
 import multer from "multer";
 import crypto from "crypto";
-import File from "../models/file";
+import SecureFile from "../models/securefile";
+import User from "../models/user";
+import { getMasterKey } from "../lib/keyManager";
 import { imageMimeTypes } from "../consts";
 
 // Multer setup for file uploads
@@ -9,8 +11,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const router = express.Router();
-
-const algorithm = "aes-256-cbc";
 
 // Get files by type, but not content
 router.get("/get/:type/:userId", (req: Request, res: Response) => {
@@ -31,17 +31,14 @@ router.get("/get/:type/:userId", (req: Request, res: Response) => {
     mimeTypes = imageMimeTypes;
   }
 
-  // TODO: Add support for other types
-
-  File.find(
+  SecureFile.find(
     { type: { $in: mimeTypes }, userId },
     { _id: 1, filename: 1, uploadedAt: 1, size: 1, type: 1, isFavorite: 1 }
   )
     .lean()
     .then((files) => {
       const filesWithoutContent = files.map((file) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { content, key, iv, _id, ...rest } = file;
+        const { _id, ...rest } = file;
         const newFile = {
           id: _id,
           ...rest,
@@ -59,7 +56,7 @@ router.get(
   "/download/:type/:id/:userId",
   async (req: Request, res: Response) => {
     try {
-      const file = await File.findOne({
+      const file = await SecureFile.findOne({
         _id: req.params.id,
         userId: req.params.userId,
       });
@@ -74,20 +71,42 @@ router.get(
         return res.status(404).send("File not found or not authorized.");
       }
 
-      const key = Buffer.from(file.key, "hex");
-      const iv = Buffer.from(file.iv, "hex");
+      const user = await User.findOne({ username: req.params.userId });
+      if (!user) {
+        return res.status(404).send("User not found.");
+      }
+
+      const masterKeyHex = getMasterKey();
+
+      const hash = crypto.createHash("sha256");
+      hash.update(masterKeyHex + user.hashedPassword);
+      const kek = hash.digest();
+
+      const encryptedKey = Buffer.from(file.encryptedKey, "hex");
+      const keyIv = Buffer.from(file.keyIv, "hex");
+      const keyAuthTag = Buffer.from(file.keyAuthTag, "hex");
+
+      // Decrypt the DEK
+      const keyDecipher = crypto.createDecipheriv("aes-256-gcm", kek, keyIv);
+      keyDecipher.setAuthTag(keyAuthTag);
+      let dek = keyDecipher.update(encryptedKey);
+      dek = Buffer.concat([dek, keyDecipher.final()]);
+
+      const fileIv = Buffer.from(file.fileIv, "hex");
+      const fileAuthTag = Buffer.from(file.fileAuthTag, "hex");
 
       // Decrypt the file content
-      const decipher = crypto.createDecipheriv(algorithm, key, iv);
-      let decrypted = decipher.update(file.content);
-      decrypted = Buffer.concat([decrypted, decipher.final()]);
+      const fileDecipher = crypto.createDecipheriv("aes-256-gcm", dek, fileIv);
+      fileDecipher.setAuthTag(fileAuthTag);
+      let decrypted = fileDecipher.update(file.content);
+      decrypted = Buffer.concat([decrypted, fileDecipher.final()]);
 
       res.status(200).send({
         uploadedAt: file.uploadedAt,
         filename: file.filename,
         type: file.type,
         size: file.size,
-        content: decrypted.toString(encoding), // or any other encoding you prefer
+        content: decrypted.toString(encoding),
       });
     } catch (error) {
       res.status(500).send("Error retrieving file.");
@@ -108,27 +127,49 @@ router.post(
         return;
       }
 
+      const user = await User.findOne({ username: req.params.userId });
+      if (!user) {
+        return res.status(404).send("User not found.");
+      }
+
+      const masterKeyHex = getMasterKey();
+
+      const hash = crypto.createHash("sha256");
+      hash.update(masterKeyHex + user.hashedPassword);
+      const kek = hash.digest();
+
       const promises = files.map((file) => {
         const { originalname, mimetype, size, buffer } = file;
 
-        // Encryption settings
-        const key = crypto.randomBytes(32);
-        const iv = crypto.randomBytes(16);
+        const fileKey = crypto.randomBytes(32); // DEK
+        const fileIv = crypto.randomBytes(16);
 
         // Encrypt the file content
-        const cipher = crypto.createCipheriv(algorithm, key, iv);
-        let encrypted = cipher.update(buffer);
-        encrypted = Buffer.concat([encrypted, cipher.final()]);
+        const fileCipher = crypto.createCipheriv("aes-256-gcm", fileKey, fileIv);
+        let encryptedContent = fileCipher.update(buffer);
+        encryptedContent = Buffer.concat([encryptedContent, fileCipher.final()]);
+        const fileAuthTag = fileCipher.getAuthTag();
+
+        const keyIv = crypto.randomBytes(16);
+
+        // Encrypt the DEK
+        const keyCipher = crypto.createCipheriv("aes-256-gcm", kek, keyIv);
+        let encryptedKeyBuffer = keyCipher.update(fileKey);
+        encryptedKeyBuffer = Buffer.concat([encryptedKeyBuffer, keyCipher.final()]);
+        const keyAuthTag = keyCipher.getAuthTag();
 
         // Create a new file document
-        const newFile = new File({
+        const newFile = new SecureFile({
           userId: req.params.userId,
           filename: originalname,
           type: mimetype,
           size: size,
-          content: encrypted,
-          key: key.toString("hex"),
-          iv: iv.toString("hex"),
+          content: encryptedContent,
+          encryptedKey: encryptedKeyBuffer.toString("hex"),
+          keyIv: keyIv.toString("hex"),
+          keyAuthTag: keyAuthTag.toString("hex"),
+          fileIv: fileIv.toString("hex"),
+          fileAuthTag: fileAuthTag.toString("hex"),
           uploadedAt: Date.now(),
           isFavorite: false,
         });
@@ -139,6 +180,7 @@ router.post(
       await Promise.all(promises);
       res.status(200).send("File(s) uploaded and encrypted successfully.");
     } catch (error) {
+      console.log(error);
       res.status(500).send("Error uploading files.");
     }
   }
@@ -147,7 +189,7 @@ router.post(
 // Delete a file
 router.delete("/delete/:id/:userId", async (req: Request, res: Response) => {
   try {
-    const file = await File.findOne({
+    const file = await SecureFile.findOne({
       _id: req.params.id,
       userId: req.params.userId,
     });
@@ -156,7 +198,7 @@ router.delete("/delete/:id/:userId", async (req: Request, res: Response) => {
         .status(404)
         .send("File not found or not authorized to delete.");
     }
-    await File.findByIdAndDelete(req.params.id);
+    await SecureFile.findByIdAndDelete(req.params.id);
     res.status(200).send("File deleted successfully.");
   } catch (error) {
     res.status(500).send("Error deleting file.");
@@ -176,8 +218,11 @@ router.put("/update/:id/:userId", async (req: Request, res: Response) => {
           "type",
           "uploadedAt",
           "content",
-          "key",
-          "iv",
+          "encryptedKey",
+          "keyIv",
+          "keyAuthTag",
+          "fileIv",
+          "fileAuthTag",
         ].includes(key)
       )
     ) {
@@ -186,7 +231,7 @@ router.put("/update/:id/:userId", async (req: Request, res: Response) => {
     if (isFavorite !== undefined && typeof isFavorite !== "boolean") {
       return res.status(400).send("isFavorite must be a boolean.");
     }
-    const file = await File.findOne({
+    const file = await SecureFile.findOne({
       _id: req.params.id,
       userId: req.params.userId,
     });
@@ -195,7 +240,7 @@ router.put("/update/:id/:userId", async (req: Request, res: Response) => {
         .status(404)
         .send("File not found or not authorized to update.");
     }
-    const updatedFile = await File.findByIdAndUpdate(
+    const updatedFile = await SecureFile.findByIdAndUpdate(
       req.params.id,
       { ...rest, isFavorite },
       {
@@ -214,7 +259,7 @@ router.put("/update/:id/:userId", async (req: Request, res: Response) => {
 
 router.get("/stats/:userId", async (req: Request, res: Response) => {
   try {
-    const stats = await File.aggregate([
+    const stats = await SecureFile.aggregate([
       {
         $match: { userId: req.params.userId },
       },
@@ -240,7 +285,7 @@ router.get("/stats/:userId", async (req: Request, res: Response) => {
 // Get all files
 router.get("/all/:userId", async (req: Request, res: Response) => {
   try {
-    const files = await File.find({ userId: req.params.userId });
+    const files = await SecureFile.find({ userId: req.params.userId });
     res.status(200).send(files);
   } catch (error) {
     res.status(500).send("Error getting files.");

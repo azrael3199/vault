@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState, useMemo } from "react";
 import { AppStateContext, File } from "../providers/AppStateProvider";
 import LoadingSpinner from "../GlobalLoader/LoadingSpinner";
 import {
@@ -19,6 +19,54 @@ import {
 import SidebarItem from "./SidebarItem";
 import clsx from "clsx";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
+import { Virtuoso } from "react-virtuoso";
+
+interface AutoSizedListProps {
+  items: File[];
+  selectedFile: File | null;
+  setSelectedFile: (file: File) => void;
+  toggleFavorite: (file: File) => void;
+}
+
+const AutoSizedList = ({ items, selectedFile, setSelectedFile, toggleFavorite }: AutoSizedListProps) => {
+  return (
+    <div className="w-full h-full flex-1">
+      <Virtuoso
+        className="[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700/80 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full pr-1"
+        style={{ height: '100%', width: '100%' }}
+        data={items}
+        itemContent={(index, file) => (
+          <div
+            id={`sidebar-item-${file.id}`}
+            onClick={() => setSelectedFile(file)}
+            className="pb-[2px]"
+          >
+            <div className="h-8">
+              <SidebarItem
+                selected={file.id === selectedFile?.id}
+                icon={
+                  <Image
+                    className={clsx("w-4 h-4 text-gray-400 transition-colors", {
+                      "text-purple-600 dark:text-purple-400": file.id === selectedFile?.id,
+                    })}
+                  />
+                }
+                itemName={file.filename}
+                itemDate={file.uploadedAt}
+                itemSize={file.size}
+                isFavorite={file.isFavorite}
+                isFavoriteHandler={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(file);
+                }}
+              />
+            </div>
+          </div>
+        )}
+      />
+    </div>
+  );
+};
 
 const SORT_BY_MAP = {
   filename: "Name",
@@ -151,17 +199,8 @@ const FileSelectionMenu = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedFile) {
-      const sidebarItemElement = document.getElementById(
-        `sidebar-item-${selectedFile.id}`
-      );
-      if (sidebarItemElement) {
-        sidebarItemElement.scrollIntoView({
-          behavior: "auto",
-          block: "center",
-        });
-      }
-    }
+    // Intentionally removed auto-scroll because standard DOM scrollIntoView conflicts with react-virtuoso
+    // and causes unintended full-page layout shifts.
   }, [selectedFile]);
 
   useEffect(() => {
@@ -186,30 +225,33 @@ const FileSelectionMenu = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy, sortOrder]);
 
+  const favorites = useMemo(() => galleryFiles.filter((f) => f.isFavorite), [galleryFiles]);
+  const others = useMemo(() => galleryFiles.filter((f) => !f.isFavorite), [galleryFiles]);
+
   return (
-    <div className="flex flex-col gap-1 overflow-y-scroll scrollable-content">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl">Files</h1>
+    <div className="flex flex-col gap-4 h-full overflow-hidden bg-transparent">
+      <div className="flex items-center justify-between gap-3 px-2">
+        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">Files</h1>
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="h-fit text-xs p-2 flex items-center gap-1"
+              className="h-fit text-xs px-3 py-1.5 flex items-center gap-1 bg-white/40 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all rounded-full"
             >
-              <span className="text-gray-500">Sort by</span>
-              {SORT_BY_MAP[sortBy] ?? sortBy}
+              <span className="text-muted-foreground font-medium">Sort by</span>
+              <span className="font-semibold">{SORT_BY_MAP[sortBy] ?? sortBy}</span>
               <ArrowUp
-                className={clsx("w-4 h-4", {
+                className={clsx("w-3.5 h-3.5 ml-1 text-purple-500", {
                   "rotate-180": sortOrder === "desc",
                 })}
               />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="p-2">
-            <ul className="space-y-2">
+          <PopoverContent className="p-2 w-48 rounded-xl glass-panel border-purple-500/20">
+            <ul className="space-y-1">
               <li
-                className={clsx("hover:bg-gray-900 p-2", {
-                  "bg-gray-700": sortBy === "filename",
+                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-purple-500/10 font-medium text-sm", {
+                  "bg-purple-500/20 text-purple-700 dark:text-purple-300": sortBy === "filename",
                 })}
                 onClick={() => {
                   setSortBy("filename");
@@ -219,8 +261,8 @@ const FileSelectionMenu = () => {
                 Filename
               </li>
               <li
-                className={clsx("hover:bg-gray-900 p-2", {
-                  "bg-gray-700": sortBy === "uploadedAt",
+                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-purple-500/10 font-medium text-sm", {
+                  "bg-purple-500/20 text-purple-700 dark:text-purple-300": sortBy === "uploadedAt",
                 })}
                 onClick={() => {
                   setSortBy("uploadedAt");
@@ -230,8 +272,8 @@ const FileSelectionMenu = () => {
                 Uploaded At
               </li>
               <li
-                className={clsx("hover:bg-gray-900 p-2", {
-                  "bg-gray-700": sortBy === "size",
+                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-purple-500/10 font-medium text-sm", {
+                  "bg-purple-500/20 text-purple-700 dark:text-purple-300": sortBy === "size",
                 })}
                 onClick={() => {
                   setSortBy("size");
@@ -246,10 +288,9 @@ const FileSelectionMenu = () => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="mr-3">
+              <div className="mr-1">
                 <Button
-                  variant="outline"
-                  className="h-fit p-2"
+                  className="h-fit p-2 bg-gradient-to-br from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-md hover:shadow-lg transition-all rounded-full border-0"
                   onClick={() => {
                     fileInputRef?.current?.click();
                   }}
@@ -266,94 +307,47 @@ const FileSelectionMenu = () => {
                 />
               </div>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>Upload a new file</p>
+            <TooltipContent className="rounded-xl glass-panel">
+              <p>Upload new files</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
       {galleryFiles.length > 0 && (
-        <div className="flex flex-col">
-          <div className="py-2">
-            <h2 className="text-md text-gray-600">Favorites</h2>
-            <div className="flex h-full scrollable-content !overflow-y-auto flex-col gap-1 text-md text-gray-600">
-              {galleryFiles
-                .filter((file) => file.isFavorite)
-                .map((file) => (
-                  <div
-                    id={`sidebar-item-${file.id}`}
-                    key={file.id}
-                    onClick={() => {
-                      setSelectedFile(file);
-                    }}
-                  >
-                    <SidebarItem
-                      selected={file.id === selectedFile?.id}
-                      icon={
-                        <Image
-                          className={clsx("w-5 h-5 text-gray-600 col-span-1", {
-                            "text-gray-900": file.id === selectedFile?.id,
-                          })}
-                        />
-                      }
-                      itemName={file.filename}
-                      itemDate={file.uploadedAt}
-                      itemSize={file.size}
-                      isFavorite={file.isFavorite}
-                      isFavoriteHandler={() => toggleFavorite(file)}
-                    />
-                  </div>
-                ))}
+        <div className="flex flex-col h-full overflow-hidden flex-1 gap-5 mt-1">
+          {favorites.length > 0 && (
+            <div className="flex flex-col flex-1 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-2xl p-2 border border-white/10 shadow-inner relative overflow-hidden">
+              <div className="sticky top-0 bg-transparent z-10 p-2 pb-1 backdrop-blur-xl">
+                <h2 className="text-[10px] uppercase tracking-widest font-extrabold text-purple-500/80 dark:text-purple-400/80 px-2 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Favorites
+                </h2>
+              </div>
+              <AutoSizedList items={favorites} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} />
             </div>
-          </div>
-          <div className="py-2">
-            <h2 className="text-md text-gray-600">Other Files</h2>
-            <div
-              id="sidebar"
-              className="py-2 flex h-full scrollable-content !overflow-y-auto flex-col gap-1 text-md text-gray-600"
-            >
-              {galleryFiles
-                .filter((file) => !file.isFavorite)
-                .map((file) => (
-                  <div
-                    id={`sidebar-item-${file.id}`}
-                    key={file.id}
-                    onClick={() => {
-                      setSelectedFile(file);
-                    }}
-                  >
-                    <SidebarItem
-                      selected={file.id === selectedFile?.id}
-                      icon={
-                        <Image
-                          className={clsx("w-5 h-5 text-gray-600 col-span-1", {
-                            "text-gray-900": file.id === selectedFile?.id,
-                          })}
-                        />
-                      }
-                      itemName={file.filename}
-                      itemDate={file.uploadedAt}
-                      itemSize={file.size}
-                      isFavorite={file.isFavorite}
-                      isFavoriteHandler={() => toggleFavorite(file)}
-                    />
-                  </div>
-                ))}
-              {itemsLoading ? (
-                <div
-                  id="loader"
-                  className="flex items-center justify-center p-3"
-                >
-                  <LoadingSpinner />
+          )}
+          {others.length > 0 && (
+            <div className="flex flex-col flex-1 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-2xl p-2 border border-white/10 shadow-inner relative overflow-hidden">
+               <div className="sticky top-0 bg-transparent z-10 p-2 pb-1 backdrop-blur-xl">
+                <h2 className="text-[10px] uppercase tracking-widest font-extrabold text-purple-500/80 dark:text-purple-400/80 px-2 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> All Files
+                </h2>
+              </div>
+              <AutoSizedList items={others} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} />
+              {itemsLoading && (
+                <div id="loader" className="flex items-center justify-center p-3 absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-md z-10">
+                  <LoadingSpinner className="text-purple-500 w-6 h-6" />
                 </div>
-              ) : null}
+              )}
             </div>
-          </div>
+          )}
         </div>
       )}
       {galleryFiles.length === 0 && !itemsLoading ? (
-        <div className="p-3 flex flex-col gap-2 overflow-y-auto text-md text-gray-600">
-          <p>No files found</p>
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground p-4">
+          <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+             <Image className="w-5 h-5 text-purple-500/50" />
+          </div>
+          <p className="text-sm font-medium">Your vault is empty</p>
         </div>
       ) : null}
     </div>

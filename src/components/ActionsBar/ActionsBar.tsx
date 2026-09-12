@@ -24,41 +24,49 @@ const ActionsBar = () => {
   console.log("pathname", window.location.hash);
 
   return (
-    <div className="flex justify-between items-start p-2 gap-3">
-      <div className="p-2 flex items-center justify-center gap-2">
-        <Sun className="w-5 h-5"></Sun>
+    <div className="flex justify-between items-center px-8 py-4 w-full max-w-[1920px] mx-auto z-20">
+      <div className="flex items-center justify-center gap-3 bg-white/40 dark:bg-black/40 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-white/20 dark:border-white/10 transition-all hover:shadow-xl">
+        <Sun className="w-4 h-4 text-amber-500" />
         <Switch
           id="dark-mode"
-          className="h-5 w-9"
+          className="h-5 w-9 data-[state=checked]:bg-purple-500"
           disabled={theme === "system"}
           slotProps={{
             thumb: {
-              className: "w-3 h-3 data-[state=checked]:translate-x-5",
+              className: "w-4 h-4 data-[state=checked]:translate-x-4 shadow-md",
             },
           }}
           onCheckedChange={onThemeChange}
           checked={theme === "dark"}
         />
-        <Moon className="w-5 h-5"></Moon>
+        <Moon className="w-4 h-4 text-indigo-400" />
       </div>
-      {window.location.hash !== "#/login" &&
-      window.location.hash !== "#/register" ? (
+      
+      {window.location.hash !== "#/login" && window.location.hash !== "#/register" && (
         <div
-          className="flex justify-center md:mr-20 items-center gap-1 hover:cursor-pointer"
+          className="flex justify-center items-center gap-3 hover:cursor-pointer group absolute left-1/2 -translate-x-1/2"
           onClick={() => navigate("/")}
         >
-          <Vault className="w-6 h-6 text-yellow-500" />
-          <h1 className="text-2xl title">Vault.</h1>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-lg group-hover:shadow-purple-500/30 transition-all group-hover:scale-110 duration-300">
+            <div className="w-full h-full bg-background rounded-lg flex items-center justify-center">
+              <Vault className="w-5 h-5 text-foreground" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent title tracking-tight group-hover:opacity-80 transition-opacity">
+            Vault.
+          </h1>
         </div>
-      ) : null}
+      )}
+
       {isAuthenticated && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-md rounded-full p-1 shadow-lg border border-white/20 dark:border-white/10">
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => setIsAuthenticated(false)}
-            className="p-2"
+            className="rounded-full w-10 h-10 p-0 hover:bg-red-500/20 hover:text-red-600 text-foreground transition-all duration-300"
+            title="Logout"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-4 h-4" />
           </Button>
         </div>
       )}
