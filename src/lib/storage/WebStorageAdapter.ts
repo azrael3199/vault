@@ -7,7 +7,7 @@ export class WebStorageAdapter implements StorageAdapter {
     return Promise.resolve();
   }
 
-  async getFiles(type: "image" | "video" | "recording" | "text"): Promise<Record<string, unknown>[]> {
+  async getFiles(type: "image" | "video" | "recording" | "text" | "audio"): Promise<Record<string, unknown>[]> {
     const userId = localStorage.getItem("userId");
     const response = await apiClient.get(`/files/get/${type}/${userId}`);
     return response.data;
@@ -19,7 +19,7 @@ export class WebStorageAdapter implements StorageAdapter {
     return response.data;
   }
 
-  async uploadFiles(files: FileList): Promise<void> {
+  async uploadFiles(files: FileList, onProgress?: (progress: number) => void): Promise<void> {
     const formData = new FormData();
     const userId = localStorage.getItem("userId");
     for (let i = 0; i < files.length; i++) {
@@ -28,6 +28,12 @@ export class WebStorageAdapter implements StorageAdapter {
     await apiClient.post(`/files/upload/${userId}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
       },
     });
   }

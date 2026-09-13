@@ -4,13 +4,115 @@ import crypto from "crypto";
 import SecureFile from "../models/securefile";
 import User from "../models/user";
 import { getMasterKey } from "../lib/keyManager";
-import { imageMimeTypes } from "../consts";
+import { imageMimeTypes, audioMimeTypes } from "../consts";
+import { Jimp, JimpMime, rgbaToInt } from "jimp";
+import { spawn } from "child_process";
+import path from "path";
+import fs from "fs/promises";
+import os from "os";
 
 // Multer setup for file uploads
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const router = express.Router();
+
+// Generate Cover Art using local text-to-image AI model (100% Offline)
+router.get("/generate-cover", async (req: Request, res: Response) => {
+  try {
+    const { trackName } = req.query;
+    if (!trackName || typeof trackName !== "string") {
+      return res.status(400).send("trackName is required");
+    }
+
+    console.log(`Generating image for: ${trackName}`);
+    const prompt = `16 bit retro pixel art cover for a song named ${trackName}, dark background, colorful symmetric design`;
+    
+    const trackHash = crypto.createHash('md5').update(trackName).digest('hex');
+    const outputPath = path.join(__dirname, "..", "cache", `${trackHash}.jpg`);
+    
+    try {
+       // Check if cached image exists
+       await fs.access(outputPath);
+       console.log(`Serving cached cover art for ${trackName}`);
+       const buffer = await fs.readFile(outputPath);
+       res.set("Cache-Control", "public, max-age=31536000");
+       res.set("Content-Type", "image/jpeg");
+       return res.send(buffer);
+    } catch {
+       // Not cached, generate it
+    }
+
+    // Generate image using local Python PyTorch scaffold
+    const pythonExecutable = path.join(__dirname, "..", "python_ai", "venv", "Scripts", "python.exe");
+    const scriptPath = path.join(__dirname, "..", "python_ai", "generate.py");
+
+    try {
+      console.log(`Executing python generation for ${trackName}...`);
+      await new Promise<void>((resolve, reject) => {
+         const pyProcess = spawn(pythonExecutable, [scriptPath, prompt, outputPath]);
+         
+         // Stream logs directly to terminal so user can see generation steps
+         pyProcess.stdout.pipe(process.stdout);
+         pyProcess.stderr.pipe(process.stderr);
+         
+         pyProcess.on('close', (code) => {
+             if (code === 0) resolve();
+             else reject(new Error(`Python process exited with code ${code}`));
+         });
+      });
+      
+      const buffer = await fs.readFile(outputPath);
+      
+      res.set("Cache-Control", "public, max-age=31536000");
+      res.set("Content-Type", "image/jpeg");
+      return res.send(buffer);
+    } catch(err) {
+       console.error("Python Model Error:", err);
+       throw new Error("Python local model failed to generate image");
+    }
+  } catch (error) {
+    console.error("Local Gen Error:", error);
+    // Fallback to procedural SVG if AI fails or errors
+    let hash = 0;
+    const trackNameStr = (req.query.trackName as string) || "Unknown";
+    for (let i = 0; i < trackNameStr.length; i++) {
+      hash = trackNameStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const r = () => {
+      hash = Math.sin(hash) * 10000;
+      return hash - Math.floor(hash);
+    };
+
+    const hue1 = Math.floor(r() * 360);
+    const hue2 = (hue1 + 180) % 360;
+    const bg = `hsl(${hue1}, 20%, 15%)`;
+    const fg1 = `hsl(${hue1}, 80%, 60%)`;
+    const fg2 = `hsl(${hue2}, 80%, 60%)`;
+
+    const size = 256;
+    const grid = 8;
+    const pixelSize = size / grid;
+
+    let rects = "";
+    for (let x = 0; x < grid / 2; x++) {
+      for (let y = 0; y < grid; y++) {
+        if (r() > 0.5) {
+          const color = r() > 0.5 ? fg1 : fg2;
+          rects += `<rect x="${x * pixelSize}" y="${y * pixelSize}" width="${pixelSize}" height="${pixelSize}" fill="${color}" />`;
+          rects += `<rect x="${(grid - 1 - x) * pixelSize}" y="${y * pixelSize}" width="${pixelSize}" height="${pixelSize}" fill="${color}" />`;
+        }
+      }
+    }
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${bg}" />${rects}</svg>`;
+
+    res.set("Cache-Control", "public, max-age=31536000");
+    res.set("Content-Type", "image/svg+xml");
+    res.send(svg);
+  }
+});
 
 // Get files by type, but not content
 router.get("/get/:type/:userId", (req: Request, res: Response) => {
@@ -22,6 +124,7 @@ router.get("/get/:type/:userId", (req: Request, res: Response) => {
     type !== "image" &&
     type !== "video" &&
     type !== "recording" &&
+    type !== "audio" &&
     type !== "text"
   ) {
     return res.status(400).json({ message: "Invalid type" });
@@ -29,6 +132,8 @@ router.get("/get/:type/:userId", (req: Request, res: Response) => {
 
   if (type === "image") {
     mimeTypes = imageMimeTypes;
+  } else if (type === "audio") {
+    mimeTypes = audioMimeTypes;
   }
 
   SecureFile.find(
@@ -64,7 +169,7 @@ router.get(
 
       let encoding: BufferEncoding = "utf-8";
 
-      if (req.params.type === "image") {
+      if (req.params.type === "image" || req.params.type === "audio") {
         encoding = "base64";
       }
 

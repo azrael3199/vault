@@ -8,7 +8,7 @@ import {
   unfavoriteFile,
 } from "@/lib/apis/file";
 import { useToast } from "../ui/use-toast";
-import { ArrowUp, Image, Plus, CheckSquare, Trash2 } from "lucide-react";
+import { ArrowUp, Image, Plus, CheckSquare, Trash2, Music } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Tooltip,
@@ -29,9 +29,10 @@ interface AutoSizedListProps {
   selectionMode: boolean;
   selectedFilesForAction: string[];
   toggleSelection: (file: File) => void;
+  isAudioMode?: boolean;
 }
 
-const AutoSizedList = ({ items, selectedFile, setSelectedFile, toggleFavorite, selectionMode, selectedFilesForAction, toggleSelection }: AutoSizedListProps) => {
+const AutoSizedList = ({ items, selectedFile, setSelectedFile, toggleFavorite, selectionMode, selectedFilesForAction, toggleSelection, isAudioMode }: AutoSizedListProps) => {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   useEffect(() => {
@@ -66,11 +67,19 @@ const AutoSizedList = ({ items, selectedFile, setSelectedFile, toggleFavorite, s
               <SidebarItem
                 selected={selectionMode ? selectedFilesForAction.includes(file.id) : file.id === selectedFile?.id}
                 icon={
-                  <Image
-                    className={clsx("w-4 h-4 text-gray-400 transition-colors", {
-                      "text-purple-600 dark:text-purple-400": file.id === selectedFile?.id,
-                    })}
-                  />
+                  isAudioMode ? (
+                    <Music
+                      className={clsx("w-4 h-4 text-gray-400 transition-colors", {
+                        "text-emerald-600 dark:text-emerald-400": file.id === selectedFile?.id,
+                      })}
+                    />
+                  ) : (
+                    <Image
+                      className={clsx("w-4 h-4 text-gray-400 transition-colors", {
+                        "text-purple-600 dark:text-purple-400": file.id === selectedFile?.id,
+                      })}
+                    />
+                  )
                 }
                 itemName={file.filename}
                 itemDate={file.uploadedAt}
@@ -99,11 +108,13 @@ const FileSelectionMenu = () => {
   const { galleryFiles, selectedFile, setGalleryFiles, setSelectedFile } =
     useContext(AppStateContext);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedFilesForAction, setSelectedFilesForAction] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"filename" | "uploadedAt" | "size">(
     "uploadedAt"
   );
+  const isAudioMode = window.location.hash.startsWith("#/audio");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -114,7 +125,7 @@ const FileSelectionMenu = () => {
   const fetchFiles = async () => {
     setItemsLoading(true);
     try {
-      const res = await getAllFilesOfType("image");
+      const res = await getAllFilesOfType(isAudioMode ? "audio" : "image");
       if (res && res.data) {
         const newFiles = res.data
           .map((file: File) => {
@@ -161,6 +172,7 @@ const FileSelectionMenu = () => {
       console.log(error);
     } finally {
       setItemsLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -172,11 +184,14 @@ const FileSelectionMenu = () => {
     if (files) {
       setItemsLoading(true);
       try {
+        setUploadProgress(0);
         const loader = document.getElementById("loader");
         if (loader) {
           loader.scrollTop = 0;
         }
-        const uploadRes = await uploadFiles(files);
+        const uploadRes = await uploadFiles(files, (progress) => {
+          setUploadProgress(progress);
+        });
         if (!uploadRes || !uploadRes.data) {
           toast({
             variant: "destructive",
@@ -195,6 +210,7 @@ const FileSelectionMenu = () => {
         console.log(error);
       } finally {
         setItemsLoading(false);
+        setUploadProgress(0);
       }
     }
   };
@@ -260,7 +276,7 @@ const FileSelectionMenu = () => {
   useEffect(() => {
     fetchFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAudioMode]);
 
   useEffect(() => {
     // Intentionally removed auto-scroll because standard DOM scrollIntoView conflicts with react-virtuoso
@@ -294,18 +310,20 @@ const FileSelectionMenu = () => {
 
   return (
     <div className="flex flex-col gap-4 h-full overflow-hidden bg-transparent">
-      <div className="flex items-center justify-between gap-3 px-2">
-        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">Files</h1>
+      <div className="flex items-center justify-between gap-1 md:gap-3 px-1 md:px-2 w-full">
+        <h1 className={clsx("text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r shrink-0", isAudioMode ? "from-emerald-400 to-teal-500" : "from-indigo-500 to-purple-500")}>
+          {isAudioMode ? "Audio" : "Gallery"}
+        </h1>
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="h-fit text-xs px-3 py-1.5 flex items-center gap-1 bg-white/40 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all rounded-full"
+              className="h-fit text-xs px-2 md:px-3 py-1.5 flex items-center gap-1 bg-white/40 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all rounded-full shrink-0"
             >
-              <span className="text-muted-foreground font-medium">Sort by</span>
+              <span className="text-muted-foreground font-medium hidden lg:inline">Sort by</span>
               <span className="font-semibold">{SORT_BY_MAP[sortBy] ?? sortBy}</span>
               <ArrowUp
-                className={clsx("w-3.5 h-3.5 ml-1 text-purple-500", {
+                className={clsx("w-3.5 h-3.5 ml-0.5 text-purple-500 shrink-0", {
                   "rotate-180": sortOrder === "desc",
                 })}
               />
@@ -376,7 +394,7 @@ const FileSelectionMenu = () => {
                 </Button>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept={isAudioMode ? "audio/*" : "image/*"}
                   multiple
                   ref={fileInputRef}
                   onChange={filesUploadHandler}
@@ -399,7 +417,7 @@ const FileSelectionMenu = () => {
                   <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Favorites
                 </h2>
               </div>
-              <AutoSizedList items={favorites} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} selectionMode={selectionMode} selectedFilesForAction={selectedFilesForAction} toggleSelection={toggleSelection} />
+              <AutoSizedList items={favorites} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} selectionMode={selectionMode} selectedFilesForAction={selectedFilesForAction} toggleSelection={toggleSelection} isAudioMode={isAudioMode} />
             </div>
           )}
           {others.length > 0 && (
@@ -409,10 +427,16 @@ const FileSelectionMenu = () => {
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> All Files
                 </h2>
               </div>
-              <AutoSizedList items={others} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} selectionMode={selectionMode} selectedFilesForAction={selectedFilesForAction} toggleSelection={toggleSelection} />
+              <AutoSizedList items={others} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} selectionMode={selectionMode} selectedFilesForAction={selectedFilesForAction} toggleSelection={toggleSelection} isAudioMode={isAudioMode} />
               {itemsLoading && (
-                <div id="loader" className="flex items-center justify-center p-3 absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-md z-10">
-                  <LoadingSpinner className="text-purple-500 w-6 h-6" />
+                <div id="loader" className="flex flex-col items-center justify-center p-3 absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md z-10 border-t border-white/10 gap-3">
+                  <div className="w-full bg-black/30 dark:bg-black/50 rounded-full h-2 overflow-hidden shadow-inner">
+                    <div className={clsx("h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(0,0,0,0.5)]", isAudioMode ? "bg-emerald-500 shadow-emerald-500/50" : "bg-purple-500 shadow-purple-500/50")} style={{ width: `${uploadProgress > 0 ? uploadProgress : 100}%` }}></div>
+                  </div>
+                  <div className={clsx("flex items-center gap-2 text-xs font-bold tracking-wider uppercase", isAudioMode ? "text-emerald-400" : "text-purple-400")}>
+                    <LoadingSpinner className={clsx("w-4 h-4", isAudioMode ? "text-emerald-500" : "text-purple-500")} />
+                    {uploadProgress > 0 ? `Encrypting & Uploading ${uploadProgress}%` : "Loading Vault..."}
+                  </div>
                 </div>
               )}
             </div>
@@ -421,8 +445,8 @@ const FileSelectionMenu = () => {
       )}
       {galleryFiles.length === 0 && !itemsLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground p-4">
-          <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
-             <Image className="w-5 h-5 text-purple-500/50" />
+          <div className={clsx("w-12 h-12 rounded-full flex items-center justify-center", isAudioMode ? "bg-emerald-500/10" : "bg-purple-500/10")}>
+             {isAudioMode ? <Music className="w-5 h-5 text-emerald-500/50" /> : <Image className="w-5 h-5 text-purple-500/50" />}
           </div>
           <p className="text-sm font-medium">Your vault is empty</p>
         </div>

@@ -3,17 +3,16 @@ import Layout from "./components/Layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import LoadingSpinner from "./components/GlobalLoader/LoadingSpinner";
 
-const Gallery = lazy(() => import("./pages/Gallery"));
-const Login = lazy(() => import("./pages/Login"));
-const Main = lazy(() => import("./pages/Main"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Register = lazy(() => import("./pages/Register"));
-const SyncReview = lazy(() => import("./components/SyncReview"));
+import Audio from "./pages/Audio";
+import Gallery from "./pages/Gallery";
+import Login from "./pages/Login";
+import Main from "./pages/Main";
+import NotFound from "./pages/NotFound";
+import Register from "./pages/Register";
+import SyncReview from "./components/SyncReview";
 
 const SuspenseLayout = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<div className="h-full w-full flex items-center justify-center"><LoadingSpinner className="w-8 h-8"/></div>}>
-    {children}
-  </Suspense>
+  <>{children}</>
 );
 
 const routes = [
@@ -56,6 +55,18 @@ const routes = [
         <Layout>
           <SuspenseLayout>
             <Gallery />
+          </SuspenseLayout>
+        </Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/audio",
+    element: (
+      <ProtectedRoute>
+        <Layout>
+          <SuspenseLayout>
+            <Audio />
           </SuspenseLayout>
         </Layout>
       </ProtectedRoute>

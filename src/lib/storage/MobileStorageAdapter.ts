@@ -50,7 +50,7 @@ export class MobileStorageAdapter implements StorageAdapter {
     }
   }
 
-  async getFiles(type: "image" | "video" | "recording" | "text"): Promise<Record<string, unknown>[]> {
+  async getFiles(type: "image" | "video" | "recording" | "text" | "audio"): Promise<Record<string, unknown>[]> {
     const userId = localStorage.getItem("userId");
     const res = await this.db.query(
       `SELECT id, filename, uploadedAt, type, size, isFavorite, updatedAt FROM secure_files WHERE userId = ? AND type LIKE ? AND isDeleted = 0`,
@@ -102,7 +102,7 @@ export class MobileStorageAdapter implements StorageAdapter {
     const decryptedContentBuffer = await MobileCrypto.decryptData(dekKey, fileCiphertextWithTag, fileIv);
     
     let contentStr = "";
-    if (type === "image") {
+    if (type === "image" || type === "audio") {
       // Convert ArrayBuffer to base64
       let binary = "";
       const bytes = new Uint8Array(decryptedContentBuffer);
@@ -123,13 +123,14 @@ export class MobileStorageAdapter implements StorageAdapter {
     };
   }
 
-  async uploadFiles(files: FileList): Promise<void> {
+  async uploadFiles(files: FileList, onProgress?: (progress: number) => void): Promise<void> {
     const userId = localStorage.getItem("userId");
     const masterKey = localStorage.getItem("masterKeyHex") || "default_local_master_key_for_now";
     const passwordHash = localStorage.getItem("passwordHash") || "";
     const kek = await MobileCrypto.deriveKEK(masterKey, passwordHash);
 
     for (let i = 0; i < files.length; i++) {
+      if (onProgress) onProgress(Math.round((i / files.length) * 100));
       const file = files[i];
       const buffer = await file.arrayBuffer();
       const contentUint8 = new Uint8Array(buffer);
@@ -177,6 +178,7 @@ export class MobileStorageAdapter implements StorageAdapter {
         encoding: Encoding.UTF8,
       });
     }
+    if (onProgress) onProgress(100);
   }
 
   async deleteFile(id: string): Promise<void> {

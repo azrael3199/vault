@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { DiffEngine, SyncPlan, SyncMetadata } from "../lib/sync/DiffEngine";
+import { AppStateContext } from "./providers/AppStateProvider";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 import LoadingSpinner from "./GlobalLoader/LoadingSpinner";
@@ -33,7 +34,8 @@ async function processInBatches<T>(items: T[], batchSize: number, processFn: (it
 
 export default function SyncReview() {
   const navigate = useNavigate();
-  const [serverIp, setServerIp] = useState<string>("");
+  const { serverIp: globalServerIp, setServerIp: setGlobalServerIp } = useContext(AppStateContext);
+  const [serverIp, setServerIp] = useState<string>(globalServerIp || "");
   const [syncPlan, setSyncPlan] = useState<SyncPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -41,7 +43,7 @@ export default function SyncReview() {
   const cancelSyncRef = useRef(false);
   
   const [logs, setLogs] = useState<string[]>([]);
-  const logsEndRef = useRef<HTMLDivElement>(null);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const addLog = (msg: string) => {
@@ -49,7 +51,9 @@ export default function SyncReview() {
   };
 
   useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+    }
   }, [logs]);
 
   const scanSubnet = async (subnet: string) => {
@@ -117,6 +121,7 @@ export default function SyncReview() {
 
       if (foundIp) {
         setServerIp(foundIp);
+        setGlobalServerIp(foundIp);
         localStorage.setItem("lastServerIp", foundIp);
         addLog(`SUCCESS: Locked onto Vault Server at ${foundIp}`);
         toast({
@@ -211,7 +216,8 @@ export default function SyncReview() {
         // 1. Delete Locally
         for (const item of syncPlan.deleteLocal) {
           if (cancelSyncRef.current) break;
-          addLog(`[Local Delete] Soft-deleting ${item.filename}`);
+          const formatStr = item.type?.startsWith("audio") ? "[Audio]" : "[Image]";
+          addLog(`[Local Delete] Soft-deleting ${formatStr} ${item.filename}`);
           const safeUpdatedAt = item.updatedAt || new Date().toISOString();
           await db.run(
             `UPDATE secure_files SET isDeleted = 1, updatedAt = ? WHERE id = ? AND userId = ?`,
@@ -222,7 +228,8 @@ export default function SyncReview() {
         // 2. Delete Remote
         for (const item of syncPlan.deleteRemote) {
           if (cancelSyncRef.current) break;
-          addLog(`[Remote Delete] Soft-deleting ${item.filename}`);
+          const formatStr = item.type?.startsWith("audio") ? "[Audio]" : "[Image]";
+          addLog(`[Remote Delete] Soft-deleting ${formatStr} ${item.filename}`);
           await fetch(
             `http://${serverIp}:5000/api/files/delete/${item.id}/${userId}`,
             { method: "DELETE" },
@@ -234,7 +241,8 @@ export default function SyncReview() {
       const pullQueue = corruptOnly ? syncPlan.corruptLocal : syncPlan.pullFromPC;
       await processInBatches(pullQueue, 25, async (item) => {
         if (cancelSyncRef.current) return;
-        addLog(`[Pulling] Fetching ${item.filename}...`);
+        const formatStr = item.type?.startsWith("audio") ? "[Audio]" : "[Image]";
+        addLog(`[Pulling] Fetching ${formatStr} ${item.filename}...`);
         const res = await fetch(
           `http://${serverIp}:5000/api/sync/pull/${item.id}/${userId}`,
         );
@@ -292,7 +300,8 @@ export default function SyncReview() {
         // 4. Push to PC (Batched concurrency 25)
         await processInBatches(syncPlan.pushToPC, 25, async (item) => {
           if (cancelSyncRef.current) return;
-          addLog(`[Pushing] Preparing ${item.filename} for push...`);
+          const formatStr = item.type?.startsWith("audio") ? "[Audio]" : "[Image]";
+          addLog(`[Pushing] Preparing ${formatStr} ${item.filename} for push...`);
           const res = await db.query(`SELECT * FROM secure_files WHERE id = ?`, [
             item.id,
           ]);
@@ -381,17 +390,19 @@ export default function SyncReview() {
   }
 
   return (
-    <div className="h-full w-full p-6 flex flex-col items-center relative overflow-y-auto animate-fade-in bg-black/5 dark:bg-black/20 pt-16">
+    <div className="h-full w-full p-6 flex flex-col items-center relative overflow-y-auto animate-fade-in bg-black/5 dark:bg-black/20">
       <div className="absolute inset-0 bg-grid-black/5 dark:bg-grid-white/5 bg-[size:20px_20px] pointer-events-none" />
 
-      <Button
-        onClick={() => navigate(-1)}
-        variant="ghost"
-        size="icon"
-        className="absolute top-4 left-4 z-50 rounded-full hover:bg-black/10 dark:hover:bg-white/10"
-      >
-        <ArrowLeft className="w-5 h-5" />
-      </Button>
+      <div className="w-full max-w-md flex justify-start mb-2 relative z-50">
+        <Button
+          onClick={() => navigate(-1)}
+          variant="ghost"
+          size="icon"
+          className="rounded-full hover:bg-black/10 dark:hover:bg-white/10"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+      </div>
 
       <div className="z-10 w-full max-w-md flex flex-col gap-6">
         <div className="flex flex-col items-center gap-3 animate-slide-up text-center">
@@ -537,7 +548,10 @@ export default function SyncReview() {
             <TerminalIcon className="w-4 h-4" />
             <span>Terminal</span>
           </div>
-          <div className="bg-black/80 dark:bg-black/90 rounded-2xl p-4 h-48 overflow-y-auto font-mono text-xs text-green-400 space-y-1.5 custom-scrollbar shadow-inner">
+          <div 
+            ref={logsContainerRef}
+            className="bg-black/80 dark:bg-black/90 rounded-2xl p-4 h-48 overflow-y-auto font-mono text-xs text-green-400 space-y-1.5 custom-scrollbar shadow-inner scroll-smooth"
+          >
             {logs.length === 0 ? (
               <span className="text-muted-foreground/50 italic">
                 Awaiting commands...
@@ -545,7 +559,6 @@ export default function SyncReview() {
             ) : (
               logs.map((log, i) => <div key={i}>{log}</div>)
             )}
-            <div ref={logsEndRef} />
           </div>
         </div>
       </div>

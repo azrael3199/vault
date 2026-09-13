@@ -10,6 +10,7 @@ import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { createPortal } from "react-dom";
 
 const Gallery = () => {
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ const Gallery = () => {
           description: (error as Error).message,
         });
         console.log(error);
+        setSelectedFile(null);
       }
     }
   };
@@ -82,7 +84,12 @@ const Gallery = () => {
 
   useEffect(() => {
     if (selectedFile?.id && selectedFile?.type) {
+      if (!selectedFile.type.startsWith('image/')) {
+        setSelectedFile(null);
+        return;
+      }
       setIsInteractive(false); // Reset interactive state on file change
+      setDataURL("");
       if (selectedFile.content) {
         setDataURL(selectedFile.content);
       } else {
@@ -133,34 +140,55 @@ const Gallery = () => {
     );
   }
 
+  const interactiveView = (
+    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center animate-fade-in">
+      {dataURL && (
+        <TransformWrapper
+          initialScale={1}
+          minScale={1}
+          maxScale={5}
+          centerOnInit
+          wheel={{ step: 0.1 }}
+        >
+          <TransformComponent wrapperClass="w-screen h-screen" contentClass="flex items-center justify-center min-w-[100vw] min-h-[100vh]">
+            <img
+              src={dataURL}
+              alt={selectedFile?.filename}
+              className="max-w-[100vw] max-h-[100vh] object-contain"
+            />
+          </TransformComponent>
+        </TransformWrapper>
+      )}
+
+      {selectedFile && (
+        <div className="absolute inset-0 z-50 pointer-events-none">
+          <Overlay
+            filename={selectedFile?.filename}
+            onPrev={onPrev}
+            onNext={onNext}
+            onDownload={onDownload}
+            isInteractive={isInteractive}
+            toggleInteractive={() => setIsInteractive(!isInteractive)}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  if (isInteractive) {
+    return createPortal(interactiveView, document.body);
+  }
+
   return (
-    <div className="h-full w-full relative overflow-hidden bg-black/5 dark:bg-black/60 rounded-2xl shadow-inner group flex items-center justify-center animate-fade-in transition-colors duration-500">
+    <div className="h-full w-full bg-black/5 dark:bg-black/60 rounded-2xl shadow-inner relative overflow-hidden group flex items-center justify-center animate-fade-in transition-colors duration-500">
       <div className="absolute inset-0 bg-grid-black/5 dark:bg-grid-white/5 bg-[size:20px_20px] pointer-events-none opacity-50" />
       
       {dataURL && (
-        isInteractive ? (
-          <TransformWrapper
-            initialScale={1}
-            minScale={0.5}
-            maxScale={5}
-            centerOnInit
-            wheel={{ step: 0.1 }}
-          >
-            <TransformComponent wrapperClass="w-full h-full flex items-center justify-center" contentClass="w-full h-full flex items-center justify-center">
-              <img
-                src={dataURL}
-                alt={selectedFile?.filename}
-                className="max-h-[100%] max-w-[100%] object-contain"
-              />
-            </TransformComponent>
-          </TransformWrapper>
-        ) : (
-          <img
-            src={dataURL}
-            alt={selectedFile?.filename}
-            className="z-0 max-h-[90%] max-w-[90%] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
-          />
-        )
+        <img
+          src={dataURL}
+          alt={selectedFile?.filename}
+          className="z-0 max-h-[90%] max-w-[90%] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
+        />
       )}
 
       {selectedFile && (

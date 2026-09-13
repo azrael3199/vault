@@ -1,7 +1,7 @@
 import { getStorage } from "../storage";
 
 export const getAllFilesOfType = async (
-  type: "image" | "video" | "recording" | "text"
+  type: "image" | "video" | "recording" | "text" | "audio"
 ) => {
   const files = await getStorage().getFiles(type);
   return { data: files };
@@ -9,15 +9,15 @@ export const getAllFilesOfType = async (
 
 export const downloadFile = async (
   id: string,
-  type: "image" | "video" | "text" | "recording"
+  type: "image" | "video" | "text" | "recording" | "audio"
 ) => {
   const fileData = await getStorage().downloadFile(id, type);
   // Wrap in an axios-like response object for backward compatibility with Gallery.tsx
   return { data: fileData };
 };
 
-export const uploadFiles = async (files: FileList) => {
-  await getStorage().uploadFiles(files);
+export const uploadFiles = async (files: FileList, onProgress?: (progress: number) => void) => {
+  await getStorage().uploadFiles(files, onProgress);
   return { data: "Success" };
 };
 

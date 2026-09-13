@@ -7,7 +7,7 @@ export interface StorageAdapter {
   /**
    * Get all files of a specific type (excluding content)
    */
-  getFiles(type: "image" | "video" | "recording" | "text"): Promise<Record<string, unknown>[]>;
+  getFiles(type: "image" | "video" | "recording" | "text" | "audio"): Promise<Record<string, unknown>[]>;
 
   /**
    * Download a specific file's content
@@ -23,7 +23,7 @@ export interface StorageAdapter {
   /**
    * Upload and encrypt new files
    */
-  uploadFiles(files: FileList): Promise<void>;
+  uploadFiles(files: FileList, onProgress?: (progress: number) => void): Promise<void>;
 
   /**
    * Soft-delete a file
