@@ -4,13 +4,21 @@ import { AppStateContext } from "@/components/providers/AppStateProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { downloadFile } from "@/lib/apis/file";
 import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { sendMobileLog } from "@/lib/utils/logger";
+import { Capacitor } from "@capacitor/core";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 const Gallery = () => {
+  const navigate = useNavigate();
   const { selectedFile, setSelectedFile, galleryFiles } =
     useContext(AppStateContext);
   const { toast } = useToast();
 
   const [dataURL, setDataURL] = useState("");
+  const [isInteractive, setIsInteractive] = useState(false);
 
   const fetchContent = async () => {
     if (selectedFile?.id && selectedFile?.type) {
@@ -25,6 +33,7 @@ const Gallery = () => {
           throw new Error("Failed to fetch content");
         }
       } catch (error) {
+        sendMobileLog(error as Error, "Gallery_FetchContent");
         toast({
           variant: "destructive",
           title: "Error",
@@ -73,6 +82,7 @@ const Gallery = () => {
 
   useEffect(() => {
     if (selectedFile?.id && selectedFile?.type) {
+      setIsInteractive(false); // Reset interactive state on file change
       if (selectedFile.content) {
         setDataURL(selectedFile.content);
       } else {
@@ -91,9 +101,21 @@ const Gallery = () => {
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              No File Selected
-            </h1>
+            <div className="flex items-center gap-4">
+              {Capacitor.isNativePlatform() && (
+                <Button
+                  onClick={() => navigate("/")}
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full hover:bg-black/10 dark:hover:bg-white/10"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+              )}
+              <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+                Gallery
+              </h1>
+            </div>
             <p className="text-muted-foreground text-sm">
               Please select an image from the sidebar to view it in theater mode.
             </p>
@@ -115,24 +137,47 @@ const Gallery = () => {
     <div className="h-full w-full relative overflow-hidden bg-black/5 dark:bg-black/60 rounded-2xl shadow-inner group flex items-center justify-center animate-fade-in transition-colors duration-500">
       <div className="absolute inset-0 bg-grid-black/5 dark:bg-grid-white/5 bg-[size:20px_20px] pointer-events-none opacity-50" />
       
-      {selectedFile && (
-        <Overlay
-          filename={selectedFile?.filename}
-          onPrev={onPrev}
-          onNext={onNext}
-          onDownload={onDownload}
-        />
-      )}
-      
       {dataURL && (
-        <img
-          src={dataURL}
-          alt={selectedFile?.filename}
-          className="z-0 max-h-[90%] max-w-[90%] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
-        />
+        isInteractive ? (
+          <TransformWrapper
+            initialScale={1}
+            minScale={0.5}
+            maxScale={5}
+            centerOnInit
+            wheel={{ step: 0.1 }}
+          >
+            <TransformComponent wrapperClass="w-full h-full flex items-center justify-center" contentClass="w-full h-full flex items-center justify-center">
+              <img
+                src={dataURL}
+                alt={selectedFile?.filename}
+                className="max-h-[100%] max-w-[100%] object-contain"
+              />
+            </TransformComponent>
+          </TransformWrapper>
+        ) : (
+          <img
+            src={dataURL}
+            alt={selectedFile?.filename}
+            className="z-0 max-h-[90%] max-w-[90%] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
+          />
+        )
+      )}
+
+      {selectedFile && (
+        <div className="absolute inset-0 z-50 pointer-events-none">
+          <Overlay
+            filename={selectedFile?.filename}
+            onPrev={onPrev}
+            onNext={onNext}
+            onDownload={onDownload}
+            isInteractive={isInteractive}
+            toggleInteractive={() => setIsInteractive(!isInteractive)}
+          />
+        </div>
       )}
     </div>
   );
 };
 
 export default Gallery;
+

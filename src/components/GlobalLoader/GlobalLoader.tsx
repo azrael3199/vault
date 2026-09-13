@@ -22,3 +22,4 @@ const GlobalLoader = ({ message }: Props) => {
 };
 
 export default GlobalLoader;
+

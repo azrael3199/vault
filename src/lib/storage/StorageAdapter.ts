@@ -1,0 +1,48 @@
+export interface StorageAdapter {
+  /**
+   * Initialize the storage adapter (e.g., connect to SQLite for mobile)
+   */
+  init(): Promise<void>;
+
+  /**
+   * Get all files of a specific type (excluding content)
+   */
+  getFiles(type: "image" | "video" | "recording" | "text"): Promise<Record<string, unknown>[]>;
+
+  /**
+   * Download a specific file's content
+   */
+  downloadFile(id: string, type: string): Promise<{
+    uploadedAt: string;
+    filename: string;
+    type: string;
+    size: number;
+    content: string; // Base64 for images, utf-8 for text
+  }>;
+
+  /**
+   * Upload and encrypt new files
+   */
+  uploadFiles(files: FileList): Promise<void>;
+
+  /**
+   * Soft-delete a file
+   */
+  deleteFile(id: string): Promise<void>;
+
+  /**
+   * Update file metadata (e.g., isFavorite)
+   */
+  updateFile(id: string, updates: Partial<Record<string, unknown>>): Promise<Record<string, unknown>>;
+
+  /**
+   * Login user and cache session/keys
+   */
+  login(username: string, passwordHash: string): Promise<Record<string, unknown>>;
+
+  /**
+   * Register user
+   */
+  register(username: string, passwordHash: string): Promise<Record<string, unknown>>;
+}
+

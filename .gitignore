@@ -36,3 +36,6 @@ release
 release/**/*
 server/server.exe
 
+# Mobile Logs
+android_logs/
+android_logs

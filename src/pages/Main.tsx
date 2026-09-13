@@ -10,7 +10,7 @@ const Main = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="h-full w-full p-6 md:p-12 flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="h-full w-full p-6 md:p-12 flex flex-col items-center justify-center relative overflow-y-auto">
       <div className="z-10 flex flex-col items-center gap-10 text-center max-w-2xl mx-auto">
         <div className="space-y-6 animate-slide-up">
           <div className="w-24 h-24 mx-auto bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[3px] rounded-3xl shadow-2xl shadow-purple-500/30">
@@ -26,7 +26,7 @@ const Main = () => {
           </p>
         </div>
 
-        <div className="flex gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <div className="flex flex-col md:flex-row gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <Card
             className="w-72 glass-panel hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20 cursor-pointer group border-purple-500/30"
             onClick={() => navigate("/gallery")}
@@ -40,6 +40,19 @@ const Main = () => {
               </CardDescription>
             </CardHeader>
           </Card>
+          <Card
+            className="w-72 glass-panel hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20 cursor-pointer group border-blue-500/30"
+            onClick={() => navigate("/sync")}
+          >
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 group-hover:from-blue-400 group-hover:to-cyan-400 transition-all">
+                Mobile Sync
+              </CardTitle>
+              <CardDescription className="text-sm mt-3 text-muted-foreground group-hover:text-foreground/80 transition-colors">
+                Synchronize your vault directly with your Windows PC over local Wi-Fi.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
       </div>
     </div>
@@ -47,3 +60,4 @@ const Main = () => {
 };
 
 export default Main;
+

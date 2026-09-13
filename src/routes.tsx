@@ -8,6 +8,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Main = lazy(() => import("./pages/Main"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Register = lazy(() => import("./pages/Register"));
+const SyncReview = lazy(() => import("./components/SyncReview"));
 
 const SuspenseLayout = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="h-full w-full flex items-center justify-center"><LoadingSpinner className="w-8 h-8"/></div>}>
@@ -61,6 +62,18 @@ const routes = [
     ),
   },
   {
+    path: "/sync",
+    element: (
+      <ProtectedRoute>
+        <Layout>
+          <SuspenseLayout>
+            <SyncReview />
+          </SuspenseLayout>
+        </Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: "*",
     element: (
       <SuspenseLayout>
@@ -71,3 +84,4 @@ const routes = [
 ];
 
 export default routes;
+

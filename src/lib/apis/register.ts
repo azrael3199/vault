@@ -6,3 +6,4 @@ export const userRegister = (username: string, password: string) => {
     password,
   });
 };
+

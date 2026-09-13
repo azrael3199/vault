@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { userRegister } from "@/lib/apis/register";
+import { getStorage } from "@/lib/storage";
 import { Vault } from "lucide-react";
 import { useContext, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -48,16 +48,21 @@ const Register = () => {
     if (username && username.length > 0 && passcode && passcode.length > 0) {
       setLoading("Registering");
       try {
-        const res = await userRegister(username, passcode);
-        if (res && res.data?.authenticated === true) {
-          sessionStorage.setItem("userId", res.data.username);
-          setIsAuthenticated(true);
+        const storage = getStorage();
+        const res = await storage.register(username, passcode);
+        if (res && res.success === true) {
+          // Auto login after register
+          const loginRes = await storage.login(username, passcode);
+          if (loginRes && loginRes.authenticated === true) {
+            localStorage.setItem("userId", loginRes.username as string);
+            setIsAuthenticated(true);
+          }
         } else {
           setIsAuthenticated(false);
           toast({
             variant: "destructive",
             title: "Error",
-            description: "Invalid user or passcode",
+            description: "Registration failed",
           });
         }
       } catch (error) {
@@ -172,3 +177,4 @@ const Register = () => {
 };
 
 export default Register;
+

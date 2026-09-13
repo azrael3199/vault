@@ -32,8 +32,8 @@ router.get("/get/:type/:userId", (req: Request, res: Response) => {
   }
 
   SecureFile.find(
-    { type: { $in: mimeTypes }, userId },
-    { _id: 1, filename: 1, uploadedAt: 1, size: 1, type: 1, isFavorite: 1 }
+    { type: { $in: mimeTypes }, userId, isDeleted: { $ne: true } },
+    { _id: 1, filename: 1, uploadedAt: 1, size: 1, type: 1, isFavorite: 1, updatedAt: 1 }
   )
     .lean()
     .then((files) => {
@@ -59,6 +59,7 @@ router.get(
       const file = await SecureFile.findOne({
         _id: req.params.id,
         userId: req.params.userId,
+        isDeleted: { $ne: true },
       });
 
       let encoding: BufferEncoding = "utf-8";
@@ -186,10 +187,10 @@ router.post(
   }
 );
 
-// Delete a file
+// Delete a file (Hard Delete)
 router.delete("/delete/:id/:userId", async (req: Request, res: Response) => {
   try {
-    const file = await SecureFile.findOne({
+    const file = await SecureFile.findOneAndDelete({
       _id: req.params.id,
       userId: req.params.userId,
     });
@@ -198,10 +199,26 @@ router.delete("/delete/:id/:userId", async (req: Request, res: Response) => {
         .status(404)
         .send("File not found or not authorized to delete.");
     }
-    await SecureFile.findByIdAndDelete(req.params.id);
     res.status(200).send("File deleted successfully.");
   } catch (error) {
     res.status(500).send("Error deleting file.");
+  }
+});
+
+// Bulk Delete files (Hard Delete)
+router.post("/bulk-delete/:userId", async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+      return res.status(400).send("Invalid request format.");
+    }
+    await SecureFile.deleteMany({
+      _id: { $in: ids },
+      userId: req.params.userId,
+    });
+    res.status(200).send("Files deleted successfully.");
+  } catch (error) {
+    res.status(500).send("Error bulk deleting files.");
   }
 });
 
@@ -234,6 +251,7 @@ router.put("/update/:id/:userId", async (req: Request, res: Response) => {
     const file = await SecureFile.findOne({
       _id: req.params.id,
       userId: req.params.userId,
+      isDeleted: { $ne: true },
     });
     if (!file) {
       return res
@@ -261,7 +279,7 @@ router.get("/stats/:userId", async (req: Request, res: Response) => {
   try {
     const stats = await SecureFile.aggregate([
       {
-        $match: { userId: req.params.userId },
+        $match: { userId: req.params.userId, isDeleted: { $ne: true } },
       },
       {
         $group: {
@@ -285,7 +303,10 @@ router.get("/stats/:userId", async (req: Request, res: Response) => {
 // Get all files
 router.get("/all/:userId", async (req: Request, res: Response) => {
   try {
-    const files = await SecureFile.find({ userId: req.params.userId });
+    const files = await SecureFile.find(
+      { userId: req.params.userId, isDeleted: { $ne: true } },
+      "_id filename uploadedAt type size isFavorite updatedAt"
+    );
     res.status(200).send(files);
   } catch (error) {
     res.status(500).send("Error getting files.");

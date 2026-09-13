@@ -8,7 +8,7 @@ import {
   unfavoriteFile,
 } from "@/lib/apis/file";
 import { useToast } from "../ui/use-toast";
-import { ArrowUp, Image, Plus } from "lucide-react";
+import { ArrowUp, Image, Plus, CheckSquare, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Tooltip,
@@ -19,31 +19,52 @@ import {
 import SidebarItem from "./SidebarItem";
 import clsx from "clsx";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 
 interface AutoSizedListProps {
   items: File[];
   selectedFile: File | null;
   setSelectedFile: (file: File) => void;
   toggleFavorite: (file: File) => void;
+  selectionMode: boolean;
+  selectedFilesForAction: string[];
+  toggleSelection: (file: File) => void;
 }
 
-const AutoSizedList = ({ items, selectedFile, setSelectedFile, toggleFavorite }: AutoSizedListProps) => {
+const AutoSizedList = ({ items, selectedFile, setSelectedFile, toggleFavorite, selectionMode, selectedFilesForAction, toggleSelection }: AutoSizedListProps) => {
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
+
+  useEffect(() => {
+    if (selectedFile && virtuosoRef.current) {
+      const index = items.findIndex((f) => f.id === selectedFile.id);
+      if (index !== -1) {
+        setTimeout(() => virtuosoRef.current?.scrollToIndex({ index, align: "center" }), 50);
+      }
+    }
+  }, [selectedFile, items]);
+
   return (
     <div className="w-full h-full flex-1">
       <Virtuoso
+        ref={virtuosoRef}
         className="[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700/80 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full pr-1"
         style={{ height: '100%', width: '100%' }}
         data={items}
         itemContent={(index, file) => (
           <div
             id={`sidebar-item-${file.id}`}
-            onClick={() => setSelectedFile(file)}
+            onClick={() => {
+              if (selectionMode) {
+                toggleSelection(file);
+              } else {
+                setSelectedFile(file);
+              }
+            }}
             className="pb-[2px]"
           >
             <div className="h-8">
               <SidebarItem
-                selected={file.id === selectedFile?.id}
+                selected={selectionMode ? selectedFilesForAction.includes(file.id) : file.id === selectedFile?.id}
                 icon={
                   <Image
                     className={clsx("w-4 h-4 text-gray-400 transition-colors", {
@@ -78,6 +99,8 @@ const FileSelectionMenu = () => {
   const { galleryFiles, selectedFile, setGalleryFiles, setSelectedFile } =
     useContext(AppStateContext);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedFilesForAction, setSelectedFilesForAction] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"filename" | "uploadedAt" | "size">(
     "uploadedAt"
   );
@@ -179,9 +202,9 @@ const FileSelectionMenu = () => {
   const toggleFavorite = async (file: File) => {
     const apiToCall = file.isFavorite ? unfavoriteFile : favoriteFile;
     try {
-      const updatedFile = (await apiToCall(file.id)).data;
+      await apiToCall(file.id);
       setGalleryFiles((prevFiles) =>
-        prevFiles.map((f) => (f.id === file.id ? updatedFile : f))
+        prevFiles.map((f) => (f.id === file.id ? { ...f, isFavorite: !f.isFavorite } : f))
       );
     } catch (error) {
       toast({
@@ -190,6 +213,47 @@ const FileSelectionMenu = () => {
         description: "Failed to update favorite status",
       });
       console.log(error);
+    }
+  };
+
+  const toggleSelection = (file: File) => {
+    setSelectedFilesForAction((prev) => {
+      if (prev.includes(file.id)) {
+        return prev.filter((id) => id !== file.id);
+      } else {
+        return [...prev, file.id];
+      }
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedFilesForAction.length === 0) return;
+    try {
+      setItemsLoading(true);
+      const { getStorage } = await import("../../lib/storage");
+      const storage = getStorage();
+      if (storage.bulkDeleteFiles) {
+        await storage.bulkDeleteFiles(selectedFilesForAction);
+      } else {
+        for (const id of selectedFilesForAction) {
+          await storage.deleteFile(id);
+        }
+      }
+      setSelectionMode(false);
+      setSelectedFilesForAction([]);
+      // Ensure the currently viewed image is closed if deleted
+      if (selectedFile && selectedFilesForAction.includes(selectedFile.id)) {
+        setSelectedFile(null as unknown as File); // Set to null to trigger empty state
+      }
+      fetchFiles();
+    } catch (e) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete files",
+      });
+    } finally {
+      setItemsLoading(false);
     }
   };
 
@@ -288,7 +352,20 @@ const FileSelectionMenu = () => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="mr-1">
+              <div className="mr-1 flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  className={clsx("h-fit p-2 transition-all rounded-full border-0", {
+                    "bg-purple-500/20 text-purple-500": selectionMode,
+                    "text-muted-foreground": !selectionMode
+                  })}
+                  onClick={() => {
+                    setSelectionMode(!selectionMode);
+                    if (selectionMode) setSelectedFilesForAction([]);
+                  }}
+                >
+                  <CheckSquare className="w-4 h-4" />
+                </Button>
                 <Button
                   className="h-fit p-2 bg-gradient-to-br from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-md hover:shadow-lg transition-all rounded-full border-0"
                   onClick={() => {
@@ -322,7 +399,7 @@ const FileSelectionMenu = () => {
                   <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Favorites
                 </h2>
               </div>
-              <AutoSizedList items={favorites} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} />
+              <AutoSizedList items={favorites} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} selectionMode={selectionMode} selectedFilesForAction={selectedFilesForAction} toggleSelection={toggleSelection} />
             </div>
           )}
           {others.length > 0 && (
@@ -332,7 +409,7 @@ const FileSelectionMenu = () => {
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> All Files
                 </h2>
               </div>
-              <AutoSizedList items={others} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} />
+              <AutoSizedList items={others} selectedFile={selectedFile} setSelectedFile={setSelectedFile} toggleFavorite={toggleFavorite} selectionMode={selectionMode} selectedFilesForAction={selectedFilesForAction} toggleSelection={toggleSelection} />
               {itemsLoading && (
                 <div id="loader" className="flex items-center justify-center p-3 absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-md z-10">
                   <LoadingSpinner className="text-purple-500 w-6 h-6" />
@@ -350,8 +427,21 @@ const FileSelectionMenu = () => {
           <p className="text-sm font-medium">Your vault is empty</p>
         </div>
       ) : null}
+
+      {selectionMode && (
+        <div className="flex items-center justify-between gap-2 p-2 bg-background/50 backdrop-blur-xl border-t border-white/10 mt-auto shrink-0 z-20">
+          <Button variant="ghost" className="text-xs text-red-500 hover:text-red-400 hover:bg-red-500/10" onClick={handleBulkDelete}>
+            <Trash2 className="w-4 h-4 mr-2" /> Delete ({selectedFilesForAction.length})
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="text-xs h-8 bg-white/10 border-white/10" onClick={() => setSelectedFilesForAction(galleryFiles.map(f => f.id))}>All</Button>
+            <Button variant="outline" className="text-xs h-8 bg-white/10 border-white/10" onClick={() => { setSelectionMode(false); setSelectedFilesForAction([]); }}>Cancel</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default FileSelectionMenu;
+

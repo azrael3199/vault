@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const SecureFile = new mongoose.Schema({
+  _id: {
+    type: String,
+    required: true,
+  },
   userId: {
     required: true,
     type: String,
@@ -49,6 +53,12 @@ const SecureFile = new mongoose.Schema({
     required: true,
     type: Boolean,
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+}, {
+  timestamps: true,
 });
 
 export default mongoose.model("SecureFile", SecureFile);

@@ -1,4 +1,4 @@
-import useSessionStorage from "@/lib/hooks/useSessionStorage";
+import uselocalStorage from "@/lib/hooks/uselocalStorage";
 import { createContext } from "react";
 
 type AuthContextValue = {
@@ -13,7 +13,7 @@ export const AuthContext = createContext<AuthContextValue>({
 });
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useSessionStorage(
+  const [isAuthenticated, setIsAuthenticated] = uselocalStorage(
     "isAuthenticated",
     false
   );
@@ -26,3 +26,4 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default AuthProvider;
+

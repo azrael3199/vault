@@ -9,10 +9,10 @@ dotenv.config();
 import { initializeKeyManager } from "./lib/keyManager";
 initializeKeyManager();
 
-import usersRouter from "./routes/users";
-import filesRouter from "./routes/files";
-
-dotenv.config();
+import userRoutes from "./routes/users";
+import fileRoutes from "./routes/files";
+import syncRoutes from "./routes/sync";
+import logRoutes from "./routes/logs";
 
 const app: Express = express();
 const port = process.env.PORT || 5000;
@@ -30,14 +30,20 @@ database.once("connected", () => {
   console.log("Database Connected");
 });
 
-app.use(express.json());
-
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(cors());
 
 // API Collection
-app.use("/api/users", usersRouter);
-app.use("/api/files", filesRouter);
+app.use("/api/files", fileRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/sync", syncRoutes);
+app.use("/api/logs", logRoutes);
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+app.get("/api/ping", (req, res) => {
+  res.status(200).json({ success: true, service: "vault-server" });
+});
+
+app.listen(port as number, "0.0.0.0", () => {
+  console.log(`[server]: Server is running at http://0.0.0.0:${port}`);
 });

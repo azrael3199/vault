@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { userLogin } from "@/lib/apis/login";
+import { getStorage } from "@/lib/storage";
 import { Vault } from "lucide-react";
 import { useContext, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -47,9 +47,10 @@ const Register = () => {
     if (username && username.length > 0 && passcode && passcode.length > 0) {
       setLoading("Logging In");
       try {
-        const res = await userLogin(username, passcode);
-        if (res && res.data?.authenticated === true) {
-          sessionStorage.setItem("userId", res.data.username);
+        const storage = getStorage();
+        const res = await storage.login(username, passcode);
+        if (res && res.authenticated === true) {
+          localStorage.setItem("userId", res.username as string);
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -171,3 +172,4 @@ const Register = () => {
 };
 
 export default Register;
+
