@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { getStorage } from "@/lib/storage";
+import { BrandIcon } from "@/components/ui/BrandIcon";
 import { useContext } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -73,8 +74,7 @@ const Recover = () => {
     <div className="h-full w-full p-4 flex flex-col justify-center items-center relative overflow-hidden animate-fade-in">
       <div className="z-10 flex flex-col items-center gap-8 w-full max-w-md">
         <div className="flex justify-center items-center gap-3 animate-slide-up">
-          <img src="/icon-light.png" alt="Vault Icon" className="w-16 h-16 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.4)] dark:hidden" />
-          <img src="/icon.png" alt="Vault Icon" className="w-16 h-16 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.2)] hidden dark:block" />
+          <BrandIcon className="w-16 h-16 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.4)] dark:shadow-[0_0_30px_rgba(0,240,255,0.2)]" />
           <h1 className="text-6xl font-extrabold tracking-tight text-vault-gradient title pb-2">
             Vault.
           </h1>

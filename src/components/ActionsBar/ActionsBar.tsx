@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useNavigate, useLocation } from "react-router-dom";
 import { getStorage } from "@/lib/storage";
 import { useToast } from "../ui/use-toast";
+import { BrandIcon } from "../ui/BrandIcon";
 
 const ActionsBar = () => {
   const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
@@ -83,8 +84,7 @@ const ActionsBar = () => {
             className="flex justify-center items-center gap-2 md:gap-3 hover:cursor-pointer group"
             onClick={() => navigate("/")}
           >
-            <img src="/icon-light.png" alt="Vault Icon" className="w-8 h-8 md:w-10 md:h-10 rounded-xl group-hover:scale-110 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] dark:hidden" />
-            <img src="/icon.png" alt="Vault Icon" className="w-8 h-8 md:w-10 md:h-10 rounded-xl group-hover:scale-110 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.2)] hidden dark:block" />
+            <BrandIcon className="w-8 h-8 md:w-10 md:h-10 rounded-xl group-hover:scale-110 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] dark:shadow-[0_0_15px_rgba(0,240,255,0.2)]" />
             <h1 className="text-xl md:text-2xl font-extrabold text-vault-gradient title tracking-tight group-hover:opacity-80 transition-opacity">
               Vault.
             </h1>

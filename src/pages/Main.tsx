@@ -9,6 +9,7 @@ import { useContext } from "react";
 import { AppStateContext } from "@/components/providers/AppStateProvider";
 import { Server, Wifi, WifiOff, Vault, Image as ImageIcon, Music, RefreshCw } from "lucide-react";
 import { ThemedIcon } from "@/components/ui/ThemedIcon";
+import { BrandIcon } from "@/components/ui/BrandIcon";
 
 const Main = () => {
   const navigate = useNavigate();
@@ -41,8 +42,7 @@ const Main = () => {
           )}
         </div>
         <div className="space-y-6 animate-slide-up">
-          <img src="/icon-light.png" alt="Vault Icon" className="w-28 h-28 mx-auto rounded-[2rem] shadow-[0_0_40px_rgba(0,240,255,0.4)] dark:hidden" />
-          <img src="/icon.png" alt="Vault Icon" className="w-28 h-28 mx-auto rounded-[2rem] shadow-[0_0_40px_rgba(0,240,255,0.2)] hidden dark:block" />
+          <BrandIcon className="w-28 h-28 mx-auto rounded-[2rem] shadow-[0_0_40px_rgba(0,240,255,0.4)] dark:shadow-[0_0_40px_rgba(0,240,255,0.2)]" />
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-vault-gradient py-2">
             Welcome to Vault.
           </h1>

@@ -3,6 +3,7 @@ import Overlay from "@/components/Overlay/Overlay";
 import { AppStateContext } from "@/components/providers/AppStateProvider";
 import { useToast } from "@/components/ui/use-toast";
 import { downloadFile } from "@/lib/apis/file";
+import { base64ToBlob } from "@/lib/utils/misc";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendMobileLog } from "@/lib/utils/logger";
@@ -27,9 +28,8 @@ const Gallery = () => {
         const res = await downloadFile(selectedFile.id, "image");
         console.log(res);
         if (res.data.content) {
-          // Use fetch to highly optimize base64 to Blob decoding off the main thread
-          const fetchRes = await fetch(`data:${selectedFile.type};base64,${res.data.content}`);
-          const blob = await fetchRes.blob();
+          // Use optimized JS base64 to Blob conversion to bypass data URI length limits
+          const blob = base64ToBlob(res.data.content, selectedFile.type);
           setDataURL(URL.createObjectURL(blob));
         } else {
           throw new Error("Failed to fetch content");

@@ -2,6 +2,8 @@ import LoadingSpinner from "@/components/GlobalLoader/LoadingSpinner";
 import Overlay from "@/components/Overlay/Overlay";
 import { AppStateContext } from "@/components/providers/AppStateProvider";
 import { useToast } from "@/components/ui/use-toast";
+import { getStorage } from "@/lib/storage";
+import { base64ToBlob } from "@/lib/utils/misc";
 import { downloadFile } from "@/lib/apis/file";
 import { useContext, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -122,9 +124,8 @@ const Audio = () => {
       try {
         const res = await downloadFile(selectedFile.id, "audio");
         if (res.data.content) {
-          // Use fetch to highly optimize base64 to Blob decoding off the main thread
-          const fetchRes = await fetch(`data:${selectedFile.type};base64,${res.data.content}`);
-          const blob = await fetchRes.blob();
+          // Use optimized JS base64 to Blob conversion to bypass data URI length limits
+          const blob = base64ToBlob(res.data.content, selectedFile.type);
           const url = URL.createObjectURL(blob);
           setDataURL(url);
         } else {
