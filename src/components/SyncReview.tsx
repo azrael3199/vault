@@ -11,16 +11,24 @@ import { useNavigate } from "react-router-dom";
 import { sendMobileLog } from "../lib/utils/logger";
 import {
   Server,
+  Wifi,
+  Scan,
+  Database,
+  Image as ImageIcon,
   Zap,
-  HardDriveUpload,
   HardDriveDownload,
+  HardDriveUpload,
   Trash2,
   ShieldAlert,
   Terminal as TerminalIcon,
   AlertCircle,
   ArrowLeft,
-  XCircle
+  XCircle,
+  CheckCircle2,
+  Lock,
+  RefreshCw
 } from "lucide-react";
+import { ThemedIcon } from "./ui/ThemedIcon";
 
 async function processInBatches<T>(items: T[], batchSize: number, processFn: (item: T) => Promise<void>, shouldCancel?: () => boolean) {
   for (let i = 0; i < items.length; i += batchSize) {
@@ -382,7 +390,7 @@ export default function SyncReview() {
   if (!Capacitor.isNativePlatform()) {
     return (
       <div className="h-full w-full p-4 flex flex-col justify-center items-center relative overflow-hidden animate-fade-in">
-        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+        <h2 className="text-2xl font-bold text-vault-gradient">
           Mobile Sync Only
         </h2>
       </div>
@@ -406,15 +414,11 @@ export default function SyncReview() {
 
       <div className="z-10 w-full max-w-md flex flex-col gap-6">
         <div className="flex flex-col items-center gap-3 animate-slide-up text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 p-[2px] shadow-lg shadow-blue-500/20">
-            <div className="w-full h-full bg-background/90 backdrop-blur-md rounded-[14px] flex items-center justify-center">
-              <Zap className="w-8 h-8 text-blue-500" />
-            </div>
-          </div>
-          <h2 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
-            Delta Sync
-          </h2>
-          <p className="text-sm text-muted-foreground">
+          <ThemedIcon icon={RefreshCw} size="xl" className={isSyncing ? "animate-spin-slow" : ""} />
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-vault-gradient">
+            Sync Device
+          </h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Connect to your PC to securely synchronize your offline vault.
           </p>
         </div>
@@ -431,7 +435,7 @@ export default function SyncReview() {
             {isScanning ? (
               <LoadingSpinner className="w-5 h-5 text-white" />
             ) : (
-              <Server className="w-5 h-5" />
+              <ThemedIcon icon={Server} size="sm" />
             )}
             {isScanning ? "Scanning Local Network..." : "Auto-Discover PC"}
           </Button>
@@ -472,28 +476,28 @@ export default function SyncReview() {
             <div className="grid grid-cols-2 gap-3">
               <SyncMetric
                 icon={
-                  <HardDriveDownload className="w-4 h-4 text-emerald-400" />
+                  <ThemedIcon icon={HardDriveDownload} size="sm" />
                 }
                 title="Pull"
                 items={syncPlan.pullFromPC}
               />
               <SyncMetric
-                icon={<HardDriveUpload className="w-4 h-4 text-blue-400" />}
+                icon={<ThemedIcon icon={HardDriveUpload} size="sm" />}
                 title="Push"
                 items={syncPlan.pushToPC}
               />
               <SyncMetric
-                icon={<AlertCircle className="w-4 h-4 text-orange-400" />}
+                icon={<ThemedIcon icon={AlertCircle} size="sm" />}
                 title="Corrupted"
                 items={syncPlan.corruptLocal}
               />
               <SyncMetric
-                icon={<Trash2 className="w-4 h-4 text-rose-400" />}
+                icon={<ThemedIcon icon={Trash2} size="sm" />}
                 title="Del Local"
                 items={syncPlan.deleteLocal}
               />
               <SyncMetric
-                icon={<ShieldAlert className="w-4 h-4 text-amber-400" />}
+                icon={<ThemedIcon icon={ShieldAlert} size="sm" />}
                 title="Del Remote"
                 items={syncPlan.deleteRemote}
               />
@@ -512,7 +516,7 @@ export default function SyncReview() {
                 <Button
                   onClick={() => executeSync(false)}
                   disabled={isGenerating}
-                  className="w-full h-14 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-white font-bold text-lg shadow-lg hover:shadow-emerald-500/30 transition-all border-0 mt-2"
+                  className="w-full h-14 rounded-xl bg-vault-gradient hover:opacity-90 text-white font-bold text-lg shadow-lg shadow-cyan-500/20 transition-all border-0 mt-2"
                 >
                   {isGenerating ? (
                     <LoadingSpinner className="w-6 h-6 text-white" />
@@ -545,7 +549,7 @@ export default function SyncReview() {
           style={{ animationDelay: "0.3s" }}
         >
           <div className="flex items-center gap-2 mb-2 text-foreground/80 font-semibold px-2">
-            <TerminalIcon className="w-4 h-4" />
+            <ThemedIcon icon={TerminalIcon} size="sm" />
             <span>Terminal</span>
           </div>
           <div 
@@ -577,15 +581,13 @@ function SyncMetric({
 }) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 dark:bg-white/5 border border-white/10 dark:border-white/5 hover:bg-white/10 transition-colors cursor-default">
-      <div className="w-8 h-8 rounded-xl bg-black/20 flex items-center justify-center">
-        {icon}
-      </div>
+      {icon}
       <div className="flex flex-col">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {title}
         </span>
-        <span className="text-lg font-bold text-foreground">
-          {items.length}
+        <span className="text-sm font-medium">
+          {items.length} file{items.length !== 1 && "s"}
         </span>
       </div>
     </div>

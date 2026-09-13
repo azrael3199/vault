@@ -69,5 +69,22 @@ export class WebStorageAdapter implements StorageAdapter {
     });
     return response.data;
   }
+
+  async recover(username: string, recoveryKey: string, newPasswordHash: string): Promise<Record<string, unknown>> {
+    const response = await apiClient.post("/users/recover", {
+      username,
+      recoveryKey,
+      newPassword: newPasswordHash,
+    });
+    return response.data;
+  }
+
+  async generateRecoveryKey(username: string, passwordHash: string): Promise<Record<string, unknown>> {
+    const response = await apiClient.post("/users/generate-recovery-key", {
+      username,
+      password: passwordHash,
+    });
+    return response.data;
+  }
 }
 

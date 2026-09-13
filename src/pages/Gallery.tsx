@@ -27,9 +27,10 @@ const Gallery = () => {
         const res = await downloadFile(selectedFile.id, "image");
         console.log(res);
         if (res.data.content) {
-          setDataURL(
-            `data:image/${selectedFile.type};base64,${res.data.content}`
-          );
+          // Use fetch to highly optimize base64 to Blob decoding off the main thread
+          const fetchRes = await fetch(`data:${selectedFile.type};base64,${res.data.content}`);
+          const blob = await fetchRes.blob();
+          setDataURL(URL.createObjectURL(blob));
         } else {
           throw new Error("Failed to fetch content");
         }
@@ -89,11 +90,23 @@ const Gallery = () => {
         return;
       }
       setIsInteractive(false); // Reset interactive state on file change
+      
+      // Clean up previous blob URL
+      if (dataURL && dataURL.startsWith('blob:')) {
+        URL.revokeObjectURL(dataURL);
+      }
       setDataURL("");
+      
       if (selectedFile.content) {
         setDataURL(selectedFile.content);
       } else {
         fetchContent();
+      }
+    }
+
+    return () => {
+      if (dataURL && dataURL.startsWith('blob:')) {
+        URL.revokeObjectURL(dataURL);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -104,7 +117,7 @@ const Gallery = () => {
       <div className="h-full w-full relative overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl flex items-center justify-center animate-fade-in">
         <div className="absolute inset-0 bg-grid-black/5 dark:bg-grid-white/5 bg-[size:20px_20px] pointer-events-none" />
         <div className="z-10 p-10 rounded-[32px] glass-panel flex flex-col items-center justify-center gap-6 text-center max-w-sm">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-inner">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/10 to-cyan-500/10 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shadow-inner">
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
           </div>
           <div className="space-y-2">
@@ -135,7 +148,7 @@ const Gallery = () => {
   if (!dataURL) {
     return (
       <div className="h-full w-full relative overflow-hidden bg-black/5 dark:bg-black/40 rounded-2xl flex items-center justify-center animate-fade-in">
-        <LoadingSpinner className="w-12 h-12 text-purple-500" />
+        <LoadingSpinner className="w-12 h-12 text-cyan-500" />
       </div>
     );
   }

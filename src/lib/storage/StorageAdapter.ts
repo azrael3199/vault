@@ -44,5 +44,15 @@ export interface StorageAdapter {
    * Register user
    */
   register(username: string, passwordHash: string): Promise<Record<string, unknown>>;
+
+  /**
+   * Recover user password
+   */
+  recover(username: string, recoveryKey: string, newPasswordHash: string): Promise<Record<string, unknown>>;
+
+  /**
+   * Generate a new recovery key for an existing user
+   */
+  generateRecoveryKey(username: string, passwordHash: string): Promise<Record<string, unknown>>;
 }
 

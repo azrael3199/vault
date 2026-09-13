@@ -103,13 +103,16 @@ export class MobileStorageAdapter implements StorageAdapter {
     
     let contentStr = "";
     if (type === "image" || type === "audio") {
-      // Convert ArrayBuffer to base64
-      let binary = "";
-      const bytes = new Uint8Array(decryptedContentBuffer);
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      contentStr = btoa(binary);
+      // Fast native conversion from ArrayBuffer to Base64 using FileReader
+      const blob = new Blob([decryptedContentBuffer]);
+      contentStr = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.substring(result.indexOf(',') + 1));
+        };
+        reader.readAsDataURL(blob);
+      });
     } else {
       contentStr = new TextDecoder().decode(decryptedContentBuffer);
     }
@@ -258,6 +261,14 @@ export class MobileStorageAdapter implements StorageAdapter {
     );
 
     return { success: true };
+  }
+
+  async recover(username: string, recoveryKey: string, newPasswordHash: string): Promise<Record<string, unknown>> {
+    throw new Error("Local device password recovery is not supported due to end-to-end encryption constraints.");
+  }
+
+  async generateRecoveryKey(username: string, passwordHash: string): Promise<Record<string, unknown>> {
+    throw new Error("Local device password recovery is not supported due to end-to-end encryption constraints.");
   }
 }
 

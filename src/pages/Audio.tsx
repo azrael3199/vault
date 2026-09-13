@@ -63,7 +63,7 @@ const Audio = () => {
 
   const gradients = [
     "from-emerald-400 to-teal-500",
-    "from-purple-500 to-pink-500",
+    "from-cyan-400 to-blue-500",
     "from-blue-400 to-indigo-500",
     "from-amber-400 to-orange-500",
     "from-rose-400 to-red-500",
@@ -75,6 +75,7 @@ const Audio = () => {
   useEffect(() => {
     let isMounted = true;
     let urlToRevoke = "";
+    const abortController = new AbortController();
 
     const fetchCover = async () => {
       if (!selectedFile) {
@@ -85,7 +86,9 @@ const Audio = () => {
       let newSrc = "";
       if (serverStatus === "connected" && serverIp) {
         try {
-          const res = await fetch(`http://${serverIp}:5000/api/files/generate-cover?trackName=${encodeURIComponent(selectedFile.filename)}`);
+          const res = await fetch(`http://${serverIp}:5000/api/files/generate-cover?trackName=${encodeURIComponent(selectedFile.filename)}`, {
+            signal: abortController.signal
+          });
           if (res.ok) {
             const blob = await res.blob();
             newSrc = URL.createObjectURL(blob);
@@ -94,19 +97,22 @@ const Audio = () => {
             newSrc = generateRetroIdenticon(selectedFile.filename);
           }
         } catch (e) {
-          newSrc = generateRetroIdenticon(selectedFile.filename);
+          if ((e as Error).name !== 'AbortError') {
+             newSrc = generateRetroIdenticon(selectedFile.filename);
+          }
         }
       } else {
         newSrc = generateRetroIdenticon(selectedFile.filename);
       }
       
-      if (isMounted) setIdenticonSrc(newSrc);
+      if (isMounted && newSrc) setIdenticonSrc(newSrc);
     };
 
     fetchCover();
 
     return () => {
       isMounted = false;
+      abortController.abort();
       if (urlToRevoke) URL.revokeObjectURL(urlToRevoke);
     };
   }, [selectedFile, serverStatus, serverIp]);
@@ -116,13 +122,9 @@ const Audio = () => {
       try {
         const res = await downloadFile(selectedFile.id, "audio");
         if (res.data.content) {
-          // Convert base64 to blob to optimize memory and playback
-          const binary = atob(res.data.content);
-          const array = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) {
-            array[i] = binary.charCodeAt(i);
-          }
-          const blob = new Blob([array], { type: selectedFile.type });
+          // Use fetch to highly optimize base64 to Blob decoding off the main thread
+          const fetchRes = await fetch(`data:${selectedFile.type};base64,${res.data.content}`);
+          const blob = await fetchRes.blob();
           const url = URL.createObjectURL(blob);
           setDataURL(url);
         } else {

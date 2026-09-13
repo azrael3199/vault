@@ -8,8 +8,9 @@ import {
   unfavoriteFile,
 } from "@/lib/apis/file";
 import { useToast } from "../ui/use-toast";
-import { ArrowUp, Image, Plus, CheckSquare, Trash2, Music } from "lucide-react";
+import { ArrowUp, Image as ImageIcon, Plus, CheckSquare, Trash2, Music, Vault } from "lucide-react";
 import { Button } from "../ui/button";
+import { ThemedIcon } from "../ui/ThemedIcon";
 import {
   Tooltip,
   TooltipContent,
@@ -70,13 +71,13 @@ const AutoSizedList = ({ items, selectedFile, setSelectedFile, toggleFavorite, s
                   isAudioMode ? (
                     <Music
                       className={clsx("w-4 h-4 text-gray-400 transition-colors", {
-                        "text-emerald-600 dark:text-emerald-400": file.id === selectedFile?.id,
+                        "text-cyan-500 dark:text-cyan-400": file.id === selectedFile?.id,
                       })}
                     />
                   ) : (
-                    <Image
+                    <ImageIcon
                       className={clsx("w-4 h-4 text-gray-400 transition-colors", {
-                        "text-purple-600 dark:text-purple-400": file.id === selectedFile?.id,
+                        "text-cyan-500 dark:text-cyan-400": file.id === selectedFile?.id,
                       })}
                     />
                   )
@@ -311,7 +312,7 @@ const FileSelectionMenu = () => {
   return (
     <div className="flex flex-col gap-4 h-full overflow-hidden bg-transparent">
       <div className="flex items-center justify-between gap-1 md:gap-3 px-1 md:px-2 w-full">
-        <h1 className={clsx("text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r shrink-0", isAudioMode ? "from-emerald-400 to-teal-500" : "from-indigo-500 to-purple-500")}>
+        <h1 className="text-xl md:text-2xl font-bold text-vault-gradient shrink-0">
           {isAudioMode ? "Audio" : "Gallery"}
         </h1>
         <Popover>
@@ -323,17 +324,17 @@ const FileSelectionMenu = () => {
               <span className="text-muted-foreground font-medium hidden lg:inline">Sort by</span>
               <span className="font-semibold">{SORT_BY_MAP[sortBy] ?? sortBy}</span>
               <ArrowUp
-                className={clsx("w-3.5 h-3.5 ml-0.5 text-purple-500 shrink-0", {
+                className={clsx("w-3.5 h-3.5 ml-0.5 text-cyan-500 shrink-0", {
                   "rotate-180": sortOrder === "desc",
                 })}
               />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="p-2 w-48 rounded-xl glass-panel border-purple-500/20">
+          <PopoverContent className="p-2 w-48 rounded-xl glass-panel border-cyan-500/20">
             <ul className="space-y-1">
               <li
-                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-purple-500/10 font-medium text-sm", {
-                  "bg-purple-500/20 text-purple-700 dark:text-purple-300": sortBy === "filename",
+                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-cyan-500/10 font-medium text-sm", {
+                  "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300": sortBy === "filename",
                 })}
                 onClick={() => {
                   setSortBy("filename");
@@ -343,8 +344,8 @@ const FileSelectionMenu = () => {
                 Filename
               </li>
               <li
-                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-purple-500/10 font-medium text-sm", {
-                  "bg-purple-500/20 text-purple-700 dark:text-purple-300": sortBy === "uploadedAt",
+                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-cyan-500/10 font-medium text-sm", {
+                  "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300": sortBy === "uploadedAt",
                 })}
                 onClick={() => {
                   setSortBy("uploadedAt");
@@ -354,8 +355,8 @@ const FileSelectionMenu = () => {
                 Uploaded At
               </li>
               <li
-                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-purple-500/10 font-medium text-sm", {
-                  "bg-purple-500/20 text-purple-700 dark:text-purple-300": sortBy === "size",
+                className={clsx("p-2 rounded-lg cursor-pointer transition-all hover:bg-cyan-500/10 font-medium text-sm", {
+                  "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300": sortBy === "size",
                 })}
                 onClick={() => {
                   setSortBy("size");
@@ -374,7 +375,7 @@ const FileSelectionMenu = () => {
                 <Button
                   variant="ghost"
                   className={clsx("h-fit p-2 transition-all rounded-full border-0", {
-                    "bg-purple-500/20 text-purple-500": selectionMode,
+                    "bg-cyan-500/20 text-cyan-500": selectionMode,
                     "text-muted-foreground": !selectionMode
                   })}
                   onClick={() => {
@@ -385,7 +386,7 @@ const FileSelectionMenu = () => {
                   <CheckSquare className="w-4 h-4" />
                 </Button>
                 <Button
-                  className="h-fit p-2 bg-gradient-to-br from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-md hover:shadow-lg transition-all rounded-full border-0"
+                  className="h-fit p-2 bg-vault-gradient text-white shadow-md hover:shadow-lg transition-all rounded-full border-0"
                   onClick={() => {
                     fileInputRef?.current?.click();
                   }}
@@ -413,7 +414,7 @@ const FileSelectionMenu = () => {
           {favorites.length > 0 && (
             <div className="flex flex-col flex-1 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-2xl p-2 border border-white/10 shadow-inner relative overflow-hidden">
               <div className="sticky top-0 bg-transparent z-10 p-2 pb-1 backdrop-blur-xl">
-                <h2 className="text-[10px] uppercase tracking-widest font-extrabold text-purple-500/80 dark:text-purple-400/80 px-2 flex items-center gap-2">
+                <h2 className="text-[10px] uppercase tracking-widest font-extrabold text-cyan-500/80 dark:text-cyan-400/80 px-2 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Favorites
                 </h2>
               </div>
@@ -423,7 +424,7 @@ const FileSelectionMenu = () => {
           {others.length > 0 && (
             <div className="flex flex-col flex-1 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-2xl p-2 border border-white/10 shadow-inner relative overflow-hidden">
                <div className="sticky top-0 bg-transparent z-10 p-2 pb-1 backdrop-blur-xl">
-                <h2 className="text-[10px] uppercase tracking-widest font-extrabold text-purple-500/80 dark:text-purple-400/80 px-2 flex items-center gap-2">
+                <h2 className="text-[10px] uppercase tracking-widest font-extrabold text-cyan-500/80 dark:text-cyan-400/80 px-2 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> All Files
                 </h2>
               </div>
@@ -431,10 +432,10 @@ const FileSelectionMenu = () => {
               {itemsLoading && (
                 <div id="loader" className="flex flex-col items-center justify-center p-3 absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md z-10 border-t border-white/10 gap-3">
                   <div className="w-full bg-black/30 dark:bg-black/50 rounded-full h-2 overflow-hidden shadow-inner">
-                    <div className={clsx("h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(0,0,0,0.5)]", isAudioMode ? "bg-emerald-500 shadow-emerald-500/50" : "bg-purple-500 shadow-purple-500/50")} style={{ width: `${uploadProgress > 0 ? uploadProgress : 100}%` }}></div>
+                    <div className="h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(0,0,0,0.5)] bg-vault-gradient" style={{ width: `${uploadProgress > 0 ? uploadProgress : 100}%` }}></div>
                   </div>
-                  <div className={clsx("flex items-center gap-2 text-xs font-bold tracking-wider uppercase", isAudioMode ? "text-emerald-400" : "text-purple-400")}>
-                    <LoadingSpinner className={clsx("w-4 h-4", isAudioMode ? "text-emerald-500" : "text-purple-500")} />
+                  <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-cyan-400">
+                    <LoadingSpinner className="w-4 h-4 text-cyan-500" />
                     {uploadProgress > 0 ? `Encrypting & Uploading ${uploadProgress}%` : "Loading Vault..."}
                   </div>
                 </div>
@@ -445,9 +446,7 @@ const FileSelectionMenu = () => {
       )}
       {galleryFiles.length === 0 && !itemsLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground p-4">
-          <div className={clsx("w-12 h-12 rounded-full flex items-center justify-center", isAudioMode ? "bg-emerald-500/10" : "bg-purple-500/10")}>
-             {isAudioMode ? <Music className="w-5 h-5 text-emerald-500/50" /> : <Image className="w-5 h-5 text-purple-500/50" />}
-          </div>
+          <ThemedIcon icon={isAudioMode ? Music : ImageIcon} size="md" className="opacity-50 grayscale" />
           <p className="text-sm font-medium">Your vault is empty</p>
         </div>
       ) : null}

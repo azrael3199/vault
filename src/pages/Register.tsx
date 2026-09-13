@@ -13,7 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { getStorage } from "@/lib/storage";
-import { Vault } from "lucide-react";
+import {
+  Server,
+  Terminal,
+  Vault,
+} from "lucide-react";
+import { ThemedIcon } from "@/components/ui/ThemedIcon";
 import { useContext, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -28,12 +33,14 @@ const Register = () => {
   const {
     register,
     handleSubmit,
-    // setValue,
+    getValues,
     formState: { errors },
   } = useForm<Inputs>();
 
   const { setLoading } = useContext(AppStateContext);
   const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
+
+  const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
 
   const { toast } = useToast();
 
@@ -50,14 +57,17 @@ const Register = () => {
       try {
         const storage = getStorage();
         const res = await storage.register(username, passcode);
-        if (res && res.success === true) {
-          // Auto login after register
-          const loginRes = await storage.login(username, passcode);
-          if (loginRes && loginRes.authenticated === true) {
-            localStorage.setItem("userId", loginRes.username as string);
-            setIsAuthenticated(true);
-          }
-        } else {
+          if (res && res.recoveryKey) {
+            // Show recovery key UI instead of auto login
+            setRecoveryKey(res.recoveryKey as string);
+          } else if (res && res.success === true) {
+            // Mobile (or no recovery key) -> Auto login
+            const loginRes = await storage.login(username, passcode);
+            if (loginRes && loginRes.authenticated === true) {
+              localStorage.setItem("userId", loginRes.username as string);
+              setIsAuthenticated(true);
+            }
+          } else {
           setIsAuthenticated(false);
           toast({
             variant: "destructive",
@@ -88,17 +98,51 @@ const Register = () => {
     <div className="h-full w-full p-4 flex flex-col justify-center items-center relative overflow-hidden animate-fade-in">
       <div className="z-10 flex flex-col items-center gap-8 w-full max-w-md">
         <div className="flex justify-center items-center gap-3 animate-slide-up">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-lg shadow-purple-500/20">
-            <div className="w-full h-full bg-background rounded-[14px] flex items-center justify-center">
-              <Vault className="w-8 h-8 text-foreground" />
-            </div>
-          </div>
-          <h1 className="text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 title pb-2">
+          <img src="/icon-light.png" alt="Vault Icon" className="w-16 h-16 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.4)] dark:hidden" />
+          <img src="/icon.png" alt="Vault Icon" className="w-16 h-16 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.2)] hidden dark:block" />
+          <h1 className="text-6xl font-extrabold tracking-tight text-vault-gradient title pb-2">
             Vault.
           </h1>
         </div>
         
-        <Card className="w-full glass-panel border-purple-500/20 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        {recoveryKey ? (
+          <Card className="w-full glass-panel border-cyan-500/20 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <CardHeader className="space-y-2 text-center pb-6">
+              <CardTitle className="text-3xl font-bold text-red-500">Recovery Key</CardTitle>
+              <CardDescription className="text-base text-foreground/90">
+                You MUST save this key securely. If you forget your passcode, this is the <strong>ONLY</strong> way to recover your vault.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4 items-center">
+              <div className="bg-background/80 border border-red-500/30 rounded-xl p-4 w-full text-center">
+                <code className="text-xl font-mono text-cyan-400 break-all select-all">
+                  {recoveryKey}
+                </code>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                We do not store this key in plain text. It will never be shown to you again.
+              </p>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4 pt-2 pb-8">
+              <Button 
+                className="w-full h-12 rounded-xl bg-vault-gradient hover:opacity-90 text-white font-semibold text-lg transition-all shadow-lg hover:shadow-cyan-500/30 border-0" 
+                onClick={async () => {
+                  const storage = getStorage();
+                  const username = getValues("username");
+                  const passcode = getValues("passcode");
+                  const loginRes = await storage.login(username, passcode);
+                  if (loginRes && loginRes.authenticated === true) {
+                    localStorage.setItem("userId", loginRes.username as string);
+                    setIsAuthenticated(true);
+                  }
+                }}
+              >
+                I have saved my Recovery Key
+              </Button>
+            </CardFooter>
+          </Card>
+        ) : (
+          <Card className="w-full glass-panel border-cyan-500/20 animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <CardHeader className="space-y-2 text-center pb-6">
             <CardTitle className="text-3xl font-bold tracking-tight">Create Vault</CardTitle>
             <CardDescription className="text-base">
@@ -111,7 +155,7 @@ const Register = () => {
                 <Label htmlFor="username" className="text-sm font-medium text-foreground/80 ml-1">Username</Label>
                 <Input
                   id="username"
-                  className="bg-background/50 border-white/10 dark:border-white/5 focus-visible:ring-purple-500/50 h-12 rounded-xl px-4 text-base transition-all hover:bg-background/80"
+                  className="bg-background/50 border-white/10 dark:border-white/5 focus-visible:ring-cyan-500/50 h-12 rounded-xl px-4 text-base transition-all hover:bg-background/80"
                   placeholder="Choose a username"
                   {...register("username", {
                     required: "Username is required",
@@ -135,7 +179,7 @@ const Register = () => {
                 <Input
                   id="passcode"
                   type="password"
-                  className="bg-background/50 border-white/10 dark:border-white/5 focus-visible:ring-purple-500/50 h-12 rounded-xl px-4 text-base transition-all hover:bg-background/80"
+                  className="bg-background/50 border-white/10 dark:border-white/5 focus-visible:ring-cyan-500/50 h-12 rounded-xl px-4 text-base transition-all hover:bg-background/80"
                   placeholder="Create a numeric passcode"
                   {...register("passcode", {
                     required: "Passcode is required",
@@ -157,8 +201,8 @@ const Register = () => {
             </form>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pt-2 pb-8">
-            <Button className="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold text-lg transition-all shadow-lg hover:shadow-purple-500/30 border-0" onClick={handleSubmit(onSubmit)}>
-              Initialize Vault
+            <Button className="w-full h-12 rounded-xl bg-vault-gradient hover:opacity-90 text-white font-semibold text-lg transition-all shadow-lg hover:shadow-cyan-500/30 border-0" onClick={handleSubmit(onSubmit)}>
+              Create Vault
             </Button>
             <Button
               variant="ghost"
@@ -171,10 +215,12 @@ const Register = () => {
             </Button>
           </CardFooter>
         </Card>
+        )}
       </div>
     </div>
   );
 };
 
 export default Register;
+
 

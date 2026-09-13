@@ -61,4 +61,8 @@ const SecureFile = new mongoose.Schema({
   timestamps: true,
 });
 
+SecureFile.index({ userId: 1, type: 1, isDeleted: 1 });
+SecureFile.index({ userId: 1, isDeleted: 1 });
+SecureFile.index({ _id: 1, userId: 1 });
+
 export default mongoose.model("SecureFile", SecureFile);

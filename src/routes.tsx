@@ -8,6 +8,7 @@ import Gallery from "./pages/Gallery";
 import Login from "./pages/Login";
 import Main from "./pages/Main";
 import NotFound from "./pages/NotFound";
+import Recover from "./pages/Recover";
 import Register from "./pages/Register";
 import SyncReview from "./components/SyncReview";
 
@@ -32,6 +33,16 @@ const routes = [
       <Layout>
         <SuspenseLayout>
           <Register />
+        </SuspenseLayout>
+      </Layout>
+    ),
+  },
+  {
+    path: "/recover",
+    element: (
+      <Layout>
+        <SuspenseLayout>
+          <Recover />
         </SuspenseLayout>
       </Layout>
     ),

@@ -6,4 +6,10 @@ export const userLogin = (username: string, password: string) => {
     password,
   });
 };
-
+export const userRecover = (username: string, recoveryKey: string, newPassword: string) => {
+  return apiClient.post("/users/recover", {
+    username,
+    recoveryKey,
+    newPassword,
+  });
+};

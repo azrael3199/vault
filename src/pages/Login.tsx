@@ -12,8 +12,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { getStorage } from "@/lib/storage";
-import { Vault } from "lucide-react";
+import {
+  Server,
+  Terminal,
+  Vault,
+} from "lucide-react";
+import { ThemedIcon } from "@/components/ui/ThemedIcon";
 import { useContext, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -83,17 +87,14 @@ const Register = () => {
     <div className="h-full w-full p-4 flex flex-col justify-center items-center relative overflow-hidden animate-fade-in">
       <div className="z-10 flex flex-col items-center gap-8 w-full max-w-md">
         <div className="flex justify-center items-center gap-3 animate-slide-up">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-lg shadow-purple-500/20">
-            <div className="w-full h-full bg-background rounded-[14px] flex items-center justify-center">
-              <Vault className="w-8 h-8 text-foreground" />
-            </div>
-          </div>
-          <h1 className="text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 title pb-2">
+          <img src="/icon-light.png" alt="Vault Icon" className="w-16 h-16 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.4)] dark:hidden" />
+          <img src="/icon.png" alt="Vault Icon" className="w-16 h-16 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.2)] hidden dark:block" />
+          <h1 className="text-6xl font-extrabold tracking-tight text-vault-gradient title pb-2">
             Vault.
           </h1>
         </div>
         
-        <Card className="w-full glass-panel border-purple-500/20 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        <Card className="w-full glass-panel border-cyan-500/20 animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <CardHeader className="space-y-2 text-center pb-6">
             <CardTitle className="text-3xl font-bold tracking-tight">Welcome back</CardTitle>
             <CardDescription className="text-base">
@@ -106,7 +107,7 @@ const Register = () => {
                 <Label htmlFor="username" className="text-sm font-medium text-foreground/80 ml-1">Username</Label>
                 <Input
                   id="username"
-                  className="bg-background/50 border-white/10 dark:border-white/5 focus-visible:ring-purple-500/50 h-12 rounded-xl px-4 text-base transition-all hover:bg-background/80"
+                  className="bg-background/50 border-white/10 dark:border-white/5 focus-visible:ring-cyan-500/50 h-12 rounded-xl px-4 text-base transition-all hover:bg-background/80"
                   placeholder="Enter your username"
                   {...register("username", {
                     required: "Username is required",
@@ -130,7 +131,7 @@ const Register = () => {
                 <Input
                   id="passcode"
                   type="password"
-                  className="bg-background/50 border-white/10 dark:border-white/5 focus-visible:ring-purple-500/50 h-12 rounded-xl px-4 text-base transition-all hover:bg-background/80"
+                  className="bg-background/50 border-white/10 dark:border-white/5 focus-visible:ring-cyan-500/50 h-12 rounded-xl px-4 text-base transition-all hover:bg-background/80"
                   placeholder="Enter your passcode"
                   {...register("passcode", {
                     required: "Passcode is required",
@@ -152,8 +153,17 @@ const Register = () => {
             </form>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pt-2 pb-8">
-            <Button className="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold text-lg transition-all shadow-lg hover:shadow-purple-500/30 border-0" onClick={handleSubmit(onSubmit)}>
+            <Button className="w-full h-12 rounded-xl bg-vault-gradient hover:opacity-90 text-white font-semibold text-lg transition-all shadow-lg hover:shadow-cyan-500/30 border-0" onClick={handleSubmit(onSubmit)}>
               Unlock Vault
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors h-auto py-2"
+              onClick={() => {
+                navigate("/recover");
+              }}
+            >
+              Forgot your passcode? Recover Vault
             </Button>
             <Button
               variant="ghost"

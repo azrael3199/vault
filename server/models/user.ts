@@ -13,6 +13,12 @@ const User = new mongoose.Schema({
     required: true,
     type: String,
   },
+  recoveryHash: {
+    required: true,
+    type: String,
+  }
 });
+
+User.index({ username: 1 }, { unique: true });
 
 export default mongoose.model("User", User);

@@ -7,7 +7,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { AppStateContext } from "@/components/providers/AppStateProvider";
-import { Server, Wifi, WifiOff } from "lucide-react";
+import { Server, Wifi, WifiOff, Vault, Image as ImageIcon, Music, RefreshCw } from "lucide-react";
+import { ThemedIcon } from "@/components/ui/ThemedIcon";
 
 const Main = () => {
   const navigate = useNavigate();
@@ -40,12 +41,9 @@ const Main = () => {
           )}
         </div>
         <div className="space-y-6 animate-slide-up">
-          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[3px] rounded-3xl shadow-2xl shadow-purple-500/30">
-            <div className="w-full h-full bg-background/90 rounded-[21px] flex items-center justify-center backdrop-blur-md">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-foreground"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-            </div>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 py-2">
+          <img src="/icon-light.png" alt="Vault Icon" className="w-28 h-28 mx-auto rounded-[2rem] shadow-[0_0_40px_rgba(0,240,255,0.4)] dark:hidden" />
+          <img src="/icon.png" alt="Vault Icon" className="w-28 h-28 mx-auto rounded-[2rem] shadow-[0_0_40px_rgba(0,240,255,0.2)] hidden dark:block" />
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-vault-gradient py-2">
             Welcome to Vault.
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
@@ -55,40 +53,46 @@ const Main = () => {
 
         <div className="flex flex-col md:flex-row flex-wrap justify-center gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <Card
-            className="w-72 glass-panel hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20 cursor-pointer group border-purple-500/30"
+            className="w-72 glass-panel hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-300 hover:scale-105 cursor-pointer group border-transparent hover:border-cyan-500/30 relative overflow-hidden"
             onClick={() => navigate("/gallery")}
           >
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 group-hover:from-purple-500 group-hover:to-pink-500 transition-all">
+            <div className="absolute inset-0 bg-vault-gradient opacity-0 group-hover:opacity-10 transition-opacity" />
+            <CardHeader className="text-center flex flex-col items-center gap-2">
+              <ThemedIcon icon={ImageIcon} size="lg" className="mb-2" />
+              <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-blue-500 transition-all">
                 Enter Gallery
               </CardTitle>
-              <CardDescription className="text-sm mt-3 text-muted-foreground group-hover:text-foreground/80 transition-colors">
+              <CardDescription className="text-sm mt-1 text-muted-foreground group-hover:text-foreground/80 transition-colors">
                 Browse, upload, and securely manage your encrypted images in a stunning theater view.
               </CardDescription>
             </CardHeader>
           </Card>
           <Card
-            className="w-72 glass-panel hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/20 cursor-pointer group border-emerald-500/30"
+            className="w-72 glass-panel hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-300 hover:scale-105 cursor-pointer group border-transparent hover:border-cyan-500/30 relative overflow-hidden"
             onClick={() => navigate("/audio")}
           >
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 group-hover:from-emerald-400 group-hover:to-teal-400 transition-all">
+            <div className="absolute inset-0 bg-vault-gradient opacity-0 group-hover:opacity-10 transition-opacity" />
+            <CardHeader className="text-center flex flex-col items-center gap-2">
+              <ThemedIcon icon={Music} size="lg" className="mb-2" />
+              <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-blue-500 transition-all">
                 Enter Audio
               </CardTitle>
-              <CardDescription className="text-sm mt-3 text-muted-foreground group-hover:text-foreground/80 transition-colors">
+              <CardDescription className="text-sm mt-1 text-muted-foreground group-hover:text-foreground/80 transition-colors">
                 Listen, upload, and securely manage your encrypted audio files and recordings.
               </CardDescription>
             </CardHeader>
           </Card>
           <Card
-            className="w-72 glass-panel hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20 cursor-pointer group border-blue-500/30"
+            className="w-72 glass-panel hover:bg-white/50 dark:hover:bg-black/50 transition-all duration-300 hover:scale-105 cursor-pointer group border-transparent hover:border-cyan-500/30 relative overflow-hidden"
             onClick={() => navigate("/sync")}
           >
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 group-hover:from-blue-400 group-hover:to-cyan-400 transition-all">
+            <div className="absolute inset-0 bg-vault-gradient opacity-0 group-hover:opacity-10 transition-opacity" />
+            <CardHeader className="text-center flex flex-col items-center gap-2">
+              <ThemedIcon icon={RefreshCw} size="lg" className="mb-2" />
+              <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-blue-500 transition-all">
                 Mobile Sync
               </CardTitle>
-              <CardDescription className="text-sm mt-3 text-muted-foreground group-hover:text-foreground/80 transition-colors">
+              <CardDescription className="text-sm mt-1 text-muted-foreground group-hover:text-foreground/80 transition-colors">
                 Synchronize your vault directly with your Windows PC over local Wi-Fi.
               </CardDescription>
             </CardHeader>

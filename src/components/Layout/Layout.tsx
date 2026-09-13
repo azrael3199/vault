@@ -4,6 +4,7 @@ import { AuthContext } from "../providers/AuthProvider";
 import Sidebar from "../Sidebar/Sidebar";
 import MobileNavbar from "../MobileNavbar/MobileNavbar";
 import { useLocation } from "react-router-dom";
+import { CyberBackground } from "../ui/CyberBackground";
 
 type Props = {
   children: React.ReactNode;
@@ -15,11 +16,8 @@ const Layout = ({ children }: Props) => {
   const isVaultRoute = location.pathname.startsWith("/gallery") || location.pathname.startsWith("/audio");
 
   return (
-    <div className="h-full flex flex-col bg-background relative overflow-hidden text-foreground selection:bg-purple-500/30">
-      {/* Immersive background elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 dark:from-indigo-900/20 dark:via-purple-900/10 dark:to-pink-900/20 pointer-events-none" />
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/10 dark:bg-purple-900/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 dark:bg-indigo-900/20 blur-[120px] pointer-events-none" />
+    <div className="h-full flex flex-col bg-background relative overflow-hidden text-foreground selection:bg-cyan-500/30">
+      <CyberBackground />
 
       <ActionsBar />
       
